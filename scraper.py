@@ -264,5 +264,5 @@ def run_scraper(start_year: int, end_year: int):
                     scraped_ids.add(details['match']['id'])
                 
 if __name__ == "__main__":
-    # Scrape seasons 2010 to 2024 (current)
-    run_scraper(2010, 2024)
+    # Scrape seasons 2010 to 2026 (current)
+    run_scraper(2025, 2026)
