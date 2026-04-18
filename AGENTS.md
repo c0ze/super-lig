@@ -8,6 +8,7 @@ Handoff notes for automated contributors.
 - ReScript frontend in [frontend/](frontend/) reads that DB directly in the browser via `sql.js`
 - GitHub Pages workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) deploys to `super-lig.arda.tr`
 - The root [CNAME](CNAME) file is the source of truth for the custom domain
+- GitHub Pages is deployed via the official Pages artifact actions, not via a `gh-pages` branch
 
 There is no production backend.
 

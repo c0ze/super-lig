@@ -325,11 +325,15 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 ### Pipeline
 
 1. Checkout repository
-2. Set up Node 20
-3. Install `frontend/` dependencies
-4. Run `npm run verify:deploy`
-5. Publish `frontend/dist` to GitHub Pages
-6. Copy the root [CNAME](CNAME) file into `frontend/dist/`
+2. Configure GitHub Pages
+3. Set up Node 20
+4. Install `frontend/` dependencies
+5. Run `npm run verify:deploy`
+6. Upload `frontend/dist` as the GitHub Pages artifact
+7. Deploy that artifact with the official GitHub Pages actions
+
+The workflow uses `actions/configure-pages`, `actions/upload-pages-artifact`, and
+`actions/deploy-pages`. It does not publish via a `gh-pages` branch.
 
 ### Production build behavior
 

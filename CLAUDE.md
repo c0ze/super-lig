@@ -22,6 +22,7 @@ below is a quick-reference; prefer `AGENTS.md` when they conflict.
   after any schema change
 - Do not store unplayed `-:-` fixtures in the DB
 - Treat the root [CNAME](CNAME) file as the Pages domain source of truth
+- Keep Pages deployment on the official GitHub Actions artifact flow
 
 ## Commands
 
