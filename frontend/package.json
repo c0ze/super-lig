@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "prepare:assets": "node ./scripts/sync-public-assets.mjs",
-    "build": "npm run prepare:assets && rescript build -with-deps && vite build",
+    "finalize:build": "node ./scripts/sync-dist-assets.mjs",
+    "build": "npm run prepare:assets && rescript build -with-deps && vite build && npm run finalize:build",
     "preview": "vite preview",
     "res:build": "rescript build -with-deps",
     "res:watch": "rescript build -w -with-deps",

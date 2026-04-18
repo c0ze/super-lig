@@ -11,6 +11,7 @@ below is a quick-reference; prefer `AGENTS.md` when they conflict.
 - Python scraper + SQLite DB at the repo root
 - ReScript/React/Vite frontend in [frontend/](frontend/) that reads the DB in-browser via `sql.js`
 - GitHub Pages deployment at `super-lig.arda.tr`
+- Team archive includes season tabs plus a dedicated `propped up games` route
 
 ## Hard rules
 
@@ -19,6 +20,8 @@ below is a quick-reference; prefer `AGENTS.md` when they conflict.
 - Keep the `sql.js/dist/sql-wasm.js` import in [frontend/src/SqlHelper.js](frontend/src/SqlHelper.js)
 - `matches` and `events` are the contract with the frontend — audit `.res` SQL
   after any schema change
+- Do not store unplayed `-:-` fixtures in the DB
+- Treat the root [CNAME](CNAME) file as the Pages domain source of truth
 
 ## Commands
 
@@ -28,6 +31,7 @@ Python:
 source venv/bin/activate
 python db.py
 python scraper.py --start 2010 --end 2025
+python scraper.py --start 2010 --end 2025 --refresh
 ```
 
 Frontend (run from [frontend/](frontend/)):
@@ -50,5 +54,8 @@ production Vite build.
 - `matches.date` is raw scraped text, not normalized dates
 - Transfermarkt renames some clubs across seasons, so `TeamView` history can
   fragment
+- `TeamView` is intentionally season-scoped; the latest season is selected by default
+- `events` now includes score snapshots and richer subtype/detail fields, and the
+  team SQL depends on them
 - Vite warns about `node:fs` / `node:crypto` from `sql-wasm.js` — build still
   succeeds

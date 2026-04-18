@@ -7,6 +7,7 @@ Handoff notes for automated contributors.
 - Python scraper builds [data/super_lig.db](data/super_lig.db)
 - ReScript frontend in [frontend/](frontend/) reads that DB directly in the browser via `sql.js`
 - GitHub Pages workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) deploys to `super-lig.arda.tr`
+- The root [CNAME](CNAME) file is the source of truth for the custom domain
 
 There is no production backend.
 
@@ -14,7 +15,8 @@ There is no production backend.
 
 - Dashboard / season archive
 - Season detail
-- Team archive
+- Team archive with season tabs
+- Team `kollandığı maçlar` / `propped up games` drill-down
 - Match timeline
 - TR / EN language toggle
 - Hash-based routing (Pages-compatible)
@@ -28,7 +30,8 @@ There is no production backend.
 
 ### Hash routing is intentional
 
-Use `#/`, `#/season/...`, `#/team/...`, `#/match/...`. Do not switch to history
+Use `#/`, `#/season/...`, `#/team/...`, `#/team/.../propped-up`,
+`#/match/...`. Do not switch to history
 routing unless the deployment target changes.
 
 ### DB is embedded into the static site
@@ -69,12 +72,14 @@ Frontend pages:
 - [frontend/src/Dashboard.res](frontend/src/Dashboard.res)
 - [frontend/src/SeasonView.res](frontend/src/SeasonView.res)
 - [frontend/src/TeamView.res](frontend/src/TeamView.res)
+- [frontend/src/ProppedUpView.res](frontend/src/ProppedUpView.res)
 - [frontend/src/MatchView.res](frontend/src/MatchView.res)
 
 Helpers:
 
 - [frontend/src/Database.res](frontend/src/Database.res)
 - [frontend/src/SqlHelper.js](frontend/src/SqlHelper.js)
+- [frontend/src/TeamQueries.res](frontend/src/TeamQueries.res)
 - [frontend/src/FixtureCard.res](frontend/src/FixtureCard.res)
 - [frontend/src/MatchTimeline.res](frontend/src/MatchTimeline.res)
 - [frontend/src/Browser.res](frontend/src/Browser.res) / [BrowserApi.js](frontend/src/BrowserApi.js)
@@ -92,6 +97,7 @@ Python:
 source venv/bin/activate
 python db.py
 python scraper.py --start 2010 --end 2025
+python scraper.py --start 2010 --end 2025 --refresh
 ```
 
 Frontend (from [frontend/](frontend/)):
@@ -144,6 +150,23 @@ entrypoint is not hardcoded to a single season.
 `save_to_db` deletes old events for a match before inserting the new timeline,
 so re-running the scraper does not duplicate event rows.
 
+### Unplayed fixtures
+
+Transfermarkt exposes future matches as `-:-`. `parse_match_report` skips those
+fixtures entirely, and `run_scraper` removes any already-stored placeholder
+rows at startup. Do not reintroduce unplayed matches into `matches`.
+
+### Event schema is richer now
+
+`events` includes:
+
+- stoppage-time fields: `minute_label`, `minute_base`, `minute_extra`
+- ordering/detail fields: `event_order`, `event_subtype`, `event_detail`
+- live score snapshots: `home_score_before`, `away_score_before`,
+  `home_score_after`, `away_score_after`
+
+Frontend timelines and team-derived metrics depend on these columns.
+
 ### Build warnings
 
 Vite externalizes `node:fs` / `node:crypto` from `sql-wasm.js`. Warning only —
@@ -162,3 +185,4 @@ production builds still succeed.
 - Do not remove the DB sync step from the build
 - Do not assume direct nested URLs work outside hash routing
 - Do not change scraper output shape without updating the frontend SQL queries
+- Do not make `TeamView` show all seasons at once unless product requirements change again

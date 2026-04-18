@@ -11,8 +11,9 @@ The project has two halves:
 
 - Season overview cards across the available archive
 - Latest-season standings and top scorers
-- Team archive pages with aggregate records and recent form
-- Match detail pages with event timelines
+- Team archive pages with aggregate records, recent form, and season tabs
+- Team-specific `kollandığı maçlar` / `propped up games` drill-down pages
+- Match detail pages with richer event timelines
 - Built-in TR / EN language toggle
 - Static deployment with no backend runtime
 
@@ -40,8 +41,10 @@ The project has two halves:
 │   │   ├── Dashboard.res
 │   │   ├── SeasonView.res
 │   │   ├── TeamView.res
+│   │   ├── ProppedUpView.res
 │   │   ├── MatchView.res
 │   │   ├── Route.res
+│   │   ├── TeamQueries.res
 │   │   ├── SqlHelper.js
 │   │   └── ...
 │   ├── test/
@@ -84,12 +87,22 @@ Columns:
 - `id`
 - `match_id` (FK → `matches.id`, `ON DELETE CASCADE`)
 - `minute`
+- `minute_label`
+- `minute_base`
+- `minute_extra`
 - `team` (`"Home"` or `"Away"`)
 - `event_type` (`Goal`, `Penalty Goal`, `Missed Penalty`, `Yellow Card`, `Second Yellow Card`, `Red Card`, `Substitution`)
+- `event_order`
+- `event_subtype`
+- `event_detail`
 - `player_1`
 - `player_2`
+- `home_score_before`
+- `away_score_before`
+- `home_score_after`
+- `away_score_after`
 
-`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
+`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. The richer event fields make it possible to render stoppage-time labels, missed penalties, second-yellow reds, and team-level derived views like `kollandığı maçlar`. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
 
 ## Prerequisites
 
@@ -159,6 +172,12 @@ Run the scraper for a year range (defaults: 2010–2025):
 python scraper.py --start 2010 --end 2025
 ```
 
+Force a re-scrape of already-seen matches:
+
+```bash
+python scraper.py --start 2010 --end 2025 --refresh
+```
+
 ### Frontend
 
 Install dependencies:
@@ -214,17 +233,23 @@ The scraper pipeline is:
    - teams
    - score
    - raw date text
-4. Parse timeline events:
+4. Skip unplayed fixtures whose score is still shown as `-:-`
+5. Parse timeline events:
    - goals
    - cards
    - substitutions
-5. Save the fixture and its events into SQLite
+   - missed penalties
+   - event subtype / detail text
+   - live score snapshots before / after each event
+6. Save the fixture and its events into SQLite
 
 Important notes:
 
 - CLI entrypoint: `python scraper.py --start <year> --end <year>` (inclusive range, defaults 2010–2025)
+- `--refresh` forces already-scraped matches to be parsed again
 - `get_scraped_match_ids()` skips fixtures already scraped with a valid score
 - Re-scraping a match deletes and re-inserts its events, so timelines cannot duplicate
+- Unplayed placeholder fixtures are removed from the DB at scraper startup and are never persisted
 
 ## Frontend Architecture
 
@@ -245,8 +270,10 @@ The frontend is intentionally backend-free in production.
 - `Route.res`: hash-based routing
 - `Dashboard.res`: home page and season archive overview
 - `SeasonView.res`: season table, top scorers, fixture list
-- `TeamView.res`: team archive and match history
+- `TeamView.res`: team archive, latest-season match history, and season tabs
+- `ProppedUpView.res`: team-specific `kollandığı maçlar` drill-down
 - `MatchView.res`: single match timeline page
+- `TeamQueries.res`: shared SQL used by team pages
 - `Copy.res`: TR / EN labels and UI copy
 - `Database.res`: ReScript bindings to `SqlHelper.js`
 - `SqlHelper.js`: browser SQLite loader/query helper
@@ -258,6 +285,7 @@ The app uses hash-based routing for GitHub Pages compatibility:
 - `#/`
 - `#/season/<year>`
 - `#/team/<name>`
+- `#/team/<name>/propped-up`
 - `#/match/<id>`
 
 Hash routing is intentional because GitHub Pages does not provide SPA rewrite rules for arbitrary nested paths.
@@ -269,6 +297,7 @@ The frontend currently has lightweight Node-based tests for:
 - route parsing and route generation
 - locale parsing and toggling
 - timeline copy helpers
+- team SQL queries for season tabs and `kollandığı maçlar`
 - `SqlHelper.js` import behavior
 
 Run them with:
@@ -276,6 +305,12 @@ Run them with:
 ```bash
 cd frontend
 npm test
+```
+
+The scraper has Python regression tests for schema setup and parsing rules:
+
+```bash
+python -m unittest tests.test_scraper
 ```
 
 ## Deployment
@@ -294,7 +329,7 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 3. Install `frontend/` dependencies
 4. Run `npm run verify:deploy`
 5. Publish `frontend/dist` to GitHub Pages
-6. Set `CNAME` to `super-lig.arda.tr`
+6. Copy the root [CNAME](CNAME) file into `frontend/dist/`
 
 ### Production build behavior
 
@@ -303,6 +338,7 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 1. Copies the DB and WASM into `frontend/public/`
 2. Compiles ReScript
 3. Builds the Vite app
+4. Copies the root [CNAME](CNAME) file into `frontend/dist/`
 
 That means deployment should not rely on manually copying `data/super_lig.db`.
 
@@ -314,6 +350,7 @@ That means deployment should not rely on manually copying `data/super_lig.db`.
 - `frontend/src/*.res.js` files are generated output and are gitignored.
 - The scraper is source-structure-sensitive and can break if Transfermarkt changes HTML classes or timeline markup.
 - Transfermarkt sometimes renames clubs across seasons, so a team's history in `TeamView` can fragment across name variants.
+- Team history is intentionally season-scoped in the UI now; the latest season is selected by default and older seasons live behind tabs.
 
 ## Recommended Workflow
 
@@ -329,7 +366,7 @@ For data refreshes:
 
 ```bash
 source venv/bin/activate
-python scraper.py
+python scraper.py --start 2010 --end 2025 --refresh
 cd frontend
 npm run build
 ```
@@ -340,7 +377,5 @@ Some good next steps for the project:
 
 - normalize match dates into machine-friendly values
 - add filters for seasons, clubs, and event types
-- improve timeline labeling for penalty goals and other special event types
 - add browser-level regression tests for key flows
-- document or script reproducible full-database refreshes
-
+- unify historical club-name variants when a single team changes naming across seasons
