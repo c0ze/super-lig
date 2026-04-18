@@ -10,17 +10,26 @@
   --text-inverse: #fafafa;
   --border: #e7e5e4;
   --border-strong: #d4d4d4;
-  --accent: #b91c1c;
+  --accent: #dc2626;
+  --accent-strong: #991b1b;
   --accent-soft: #fef2f2;
+  --accent-tint: #fee2e2;
   --positive: #15803d;
   --positive-soft: #f0fdf4;
+  --positive-tint: #bbf7d0;
   --warning: #a16207;
   --warning-soft: #fefce8;
-  --negative: #b91c1c;
+  --warning-tint: #fde68a;
+  --negative: #dc2626;
   --negative-soft: #fef2f2;
-  --neutral: #737373;
+  --negative-tint: #fecaca;
+  --neutral: #a3a3a3;
+  --away: #1d4ed8;
+  --away-tint: #dbeafe;
   --radius: 6px;
-  --radius-lg: 10px;
+  --radius-lg: 12px;
+  --shadow-card: 0 1px 2px rgba(10, 10, 10, 0.04);
+  --shadow-hover: 0 4px 12px rgba(10, 10, 10, 0.08);
   --content-width: 1200px;
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -84,6 +93,17 @@ button {
   padding: 0.85rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+.topbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
 }
 
 .brand-lockup {
@@ -99,7 +119,8 @@ button {
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  background: var(--text-strong);
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 
 .brand-mark-ball {
@@ -191,37 +212,61 @@ button {
 }
 
 .hero-copy {
-  padding: 2rem;
-  border: 1px solid var(--border);
+  position: relative;
+  padding: 2.25rem 2.25rem 2rem;
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  color: var(--text-inverse);
+  overflow: hidden;
+}
+
+.hero-copy::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
+}
+
+.hero-copy::after {
+  content: "";
+  position: absolute;
+  right: -6rem;
+  bottom: -6rem;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.18) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .hero-copy h1 {
   margin: 0.5rem 0 0.75rem;
   font-family: var(--font-sans);
-  font-size: clamp(1.8rem, 3vw, 2.5rem);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--text-strong);
+  font-size: clamp(1.9rem, 3.2vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--text-inverse);
 }
 
 .hero-copy p {
   margin: 0;
   max-width: 60ch;
-  color: var(--text-muted);
-  font-size: 0.92rem;
+  color: rgba(250, 250, 250, 0.7);
+  font-size: 0.95rem;
   line-height: 1.6;
 }
 
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   font-family: var(--font-mono);
   font-size: 0.68rem;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--accent);
 }
 
 .hero-actions {
@@ -248,23 +293,23 @@ button {
 }
 
 .button-primary {
-  background: var(--text-strong);
+  background: var(--accent);
   color: var(--text-inverse);
 }
 
 .button-primary:hover {
-  background: #262626;
+  background: var(--accent-strong);
 }
 
 .button-secondary {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-inverse);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .button-secondary:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-muted);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .button-ghost {
@@ -277,7 +322,7 @@ button {
 }
 
 .button-ghost:hover {
-  color: var(--text);
+  color: var(--accent);
 }
 
 .button-ghost::before {
@@ -286,14 +331,27 @@ button {
 }
 
 .hero-highlight {
-  padding: 1.25rem 1.5rem;
+  position: relative;
+  padding: 1.4rem 1.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 0.75rem;
+  overflow: hidden;
+}
+
+.hero-highlight::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
 }
 
 .hero-highlight-label {
@@ -302,15 +360,15 @@ button {
   letter-spacing: 0.1em;
   font-size: 0.68rem;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--accent);
 }
 
 .hero-highlight strong {
   display: block;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 1.6rem;
-  font-weight: 500;
+  font-size: 1.75rem;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--text-strong);
@@ -363,11 +421,18 @@ button {
   border-radius: var(--radius-lg);
   background: var(--surface);
   overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 
 .metric-card {
-  padding: 1.15rem 1.25rem;
+  position: relative;
+  padding: 1.2rem 1.35rem;
   border-right: 1px solid var(--border);
+  transition: background-color 120ms ease;
+}
+
+.metric-card:hover {
+  background: var(--surface-muted);
 }
 
 .metric-card:last-child {
@@ -382,15 +447,15 @@ button {
   font-size: 0.66rem;
   font-weight: 500;
   color: var(--text-muted);
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.5rem;
 }
 
 .metric-card strong {
   display: block;
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.65rem;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
   color: var(--text-strong);
@@ -407,10 +472,11 @@ button {
 }
 
 .section-card {
-  padding: 1.25rem 1.4rem;
+  padding: 1.35rem 1.4rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 
 .section-stack {
@@ -437,11 +503,24 @@ button {
 }
 
 .section-heading h2 {
+  position: relative;
   margin: 0;
-  font-size: 0.95rem;
+  padding-left: 0.75rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text-strong);
+}
+
+.section-heading h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  bottom: 0.15rem;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
 }
 
 .section-heading p {
@@ -485,8 +564,8 @@ button {
 
 .points-cell {
   font-family: var(--font-mono);
-  font-weight: 600;
-  color: var(--text-strong);
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .table-team-button,
@@ -560,22 +639,27 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.75rem;
-  height: 1.75rem;
+  min-width: 1.85rem;
+  height: 1.85rem;
   border-radius: var(--radius);
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+  background: var(--accent-tint);
+  color: var(--accent-strong);
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ranking-row:nth-child(n + 4) .ranking-index {
+  background: var(--surface-muted);
+  color: var(--text-muted);
 }
 
 .ranking-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--text-strong);
 }
 
@@ -634,7 +718,13 @@ button {
 }
 
 .season-card:hover {
-  border-color: var(--text-strong);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+
+.season-card strong {
+  color: var(--accent);
 }
 
 .season-card-stats {
@@ -683,7 +773,8 @@ button {
 .match-card-interactive:focus-visible,
 .action-row:hover,
 .action-row:focus-visible {
-  border-color: var(--text-strong);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
   outline: none;
 }
 
@@ -703,20 +794,21 @@ button {
 }
 
 .match-timeline-link {
-  padding: 0.3rem 0.6rem;
+  padding: 0.3rem 0.7rem;
   border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-muted);
+  background: var(--accent-soft);
+  color: var(--accent);
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  border: 1px solid var(--border);
-  transition: color 120ms ease, border-color 120ms ease;
+  border: 1px solid var(--accent-tint);
+  transition: color 120ms ease, background-color 120ms ease;
 }
 
 .match-timeline-link:hover {
-  color: var(--text-strong);
-  border-color: var(--border-strong);
+  color: var(--text-inverse);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .match-card.spacious {
@@ -761,16 +853,15 @@ button {
 }
 
 .score-chip {
-  min-width: 4.5rem;
-  padding: 0.35rem 0.7rem;
+  min-width: 4.75rem;
+  padding: 0.4rem 0.8rem;
   border-radius: var(--radius);
-  color: var(--text-strong);
-  background: var(--surface-muted);
-  border: 1px solid var(--border);
+  color: var(--text-inverse);
+  background: var(--surface-dark);
   font-family: var(--font-mono);
-  font-size: 0.88rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .result-pill {
@@ -788,19 +879,19 @@ button {
 .positive {
   color: var(--positive);
   background: var(--positive-soft);
-  border-color: #bbf7d0;
+  border-color: var(--positive-tint);
 }
 
 .negative {
   color: var(--negative);
   background: var(--negative-soft);
-  border-color: #fecaca;
+  border-color: var(--negative-tint);
 }
 
 .neutral {
   color: var(--text-muted);
   background: var(--surface-muted);
-  border-color: var(--border);
+  border-color: var(--border-strong);
 }
 
 .form-strip {
@@ -811,31 +902,27 @@ button {
 }
 
 .form-badge {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: var(--radius);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .form-badge.positive {
-  color: var(--positive);
-  background: var(--positive-soft);
-  border-color: #bbf7d0;
+  color: var(--text-inverse);
+  background: var(--positive);
 }
 
 .form-badge.negative {
-  color: var(--negative);
-  background: var(--negative-soft);
-  border-color: #fecaca;
+  color: var(--text-inverse);
+  background: var(--negative);
 }
 
 .form-badge.neutral {
-  color: var(--text-muted);
-  background: var(--surface-muted);
-  border-color: var(--border);
+  color: var(--text-inverse);
+  background: var(--neutral);
 }
 
 .record-grid {
@@ -853,24 +940,36 @@ button {
 }
 
 .scoreboard {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 1.25rem;
+  gap: 1.5rem;
   align-items: center;
   margin-top: 1.5rem;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
+  padding: 1.75rem 1.5rem;
   border-radius: var(--radius-lg);
-  background: var(--surface-muted);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  overflow: hidden;
+}
+
+.scoreboard::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 100%);
 }
 
 .scoreboard-team {
   padding: 0;
-  color: var(--text-strong);
+  color: var(--text-inverse);
   background: transparent;
   font-family: var(--font-sans);
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  font-weight: 500;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
   cursor: pointer;
   transition: color 120ms ease;
 }
@@ -890,29 +989,29 @@ button {
 .scoreboard-core {
   display: grid;
   justify-items: center;
-  gap: 0.3rem;
-  padding: 0.85rem 1.25rem;
+  gap: 0.35rem;
+  padding: 0.85rem 1.5rem;
   border-radius: var(--radius);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .scoreboard-score {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
-  font-weight: 500;
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--text-strong);
+  letter-spacing: -0.04em;
+  color: var(--text-inverse);
 }
 
 .scoreboard-meta {
-  color: var(--text-muted);
+  color: rgba(250, 250, 250, 0.55);
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
 }
 
 .timeline-list {
@@ -961,9 +1060,9 @@ button {
 .timeline-node {
   position: relative;
   z-index: 1;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-top: 0.75rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: 0.7rem;
   border-radius: 50%;
   background: var(--neutral);
   box-shadow: 0 0 0 3px var(--bg);
@@ -971,6 +1070,7 @@ button {
 
 .timeline-node.goal {
   background: var(--accent);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent-tint);
 }
 
 .timeline-node.warning {
@@ -979,6 +1079,7 @@ button {
 
 .timeline-node.danger {
   background: var(--negative);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--negative-tint);
 }
 
 .timeline-card {
@@ -989,11 +1090,11 @@ button {
 }
 
 .timeline-home .timeline-card {
-  border-left: 2px solid var(--border-strong);
+  border-left: 3px solid var(--accent);
 }
 
 .timeline-away .timeline-card {
-  border-left: 2px solid var(--border-strong);
+  border-left: 3px solid var(--away);
 }
 
 .timeline-card-head {
@@ -1044,21 +1145,21 @@ button {
 }
 
 .event-badge.goal {
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-color: #fecaca;
+  color: var(--text-inverse);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .event-badge.warning {
   color: var(--warning);
   background: var(--warning-soft);
-  border-color: #fde68a;
+  border-color: var(--warning-tint);
 }
 
 .event-badge.danger {
-  color: var(--negative);
-  background: var(--negative-soft);
-  border-color: #fecaca;
+  color: var(--text-inverse);
+  background: var(--negative);
+  border-color: var(--negative);
 }
 
 .event-badge.neutral {
