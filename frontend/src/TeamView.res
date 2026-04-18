@@ -9,12 +9,17 @@ type teamSummary = {
   yellow_cards: int,
   red_cards: int,
   penalties: int,
+  propped_up_games: int,
 }
 
 type teamEventSummary = {
   yellow_cards: int,
   red_cards: int,
   penalties: int,
+}
+
+type proppedUpRow = {
+  propped_up_games: int,
 }
 
 type scorerRow = {
@@ -72,11 +77,12 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "SELECT " ++
       "COALESCE(SUM(CASE WHEN e.event_type = 'Yellow Card' THEN 1 ELSE 0 END), 0) AS yellow_cards, " ++
       "COALESCE(SUM(CASE WHEN e.event_type IN ('Red Card', 'Second Yellow Card') THEN 1 ELSE 0 END), 0) AS red_cards, " ++
-      "COALESCE(SUM(CASE WHEN e.event_type = 'Penalty Goal' OR (e.event_type = 'Goal' AND COALESCE(e.player_1, '') != '' AND e.player_1 = e.player_2) THEN 1 ELSE 0 END), 0) AS penalties " ++
+      "COALESCE(SUM(CASE WHEN e.event_type IN ('Penalty Goal', 'Missed Penalty') OR (e.event_type = 'Goal' AND COALESCE(e.player_1, '') != '' AND e.player_1 = e.player_2) THEN 1 ELSE 0 END), 0) AS penalties " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
       "WHERE (e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?)",
       [team, team],
     )
+    let proppedUpRows: array<proppedUpRow> = Database.runQuery(TeamQueries.proppedUpGamesSql, [team])
     let scorers: array<scorerRow> = Database.runQuery(
       "SELECT e.player_1 AS player, COUNT(*) AS goals " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
@@ -99,6 +105,8 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           Js.Array2.length(eventSummaries) > 0
             ? Js.Array2.unsafe_get(eventSummaries, 0)
             : {yellow_cards: 0, red_cards: 0, penalties: 0}
+        let proppedUpGames =
+          Js.Array2.length(proppedUpRows) > 0 ? Js.Array2.unsafe_get(proppedUpRows, 0).propped_up_games : 0
 
         Some({
           matches: base.matches,
@@ -111,6 +119,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           yellow_cards: eventSummary.yellow_cards,
           red_cards: eventSummary.red_cards,
           penalties: eventSummary.penalties,
+          propped_up_games: proppedUpGames,
         })
       } else {
         None
@@ -184,6 +193,12 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           <span className="metric-label">{React.string(Copy.penaltiesLabel(language))}</span>
           <strong>{React.int(summary.penalties)}</strong>
         </article>
+        <article
+          className="metric-card"
+          title={Copy.proppedUpGamesDescription(language)}>
+          <span className="metric-label">{React.string(Copy.proppedUpGamesLabel(language))}</span>
+          <strong>{React.int(summary.propped_up_games)}</strong>
+        </article>
       </section>
     | None => React.null
     }}
@@ -231,6 +246,10 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
             <div className="record-row">
               <span>{React.string(Copy.penaltiesLabel(language))}</span>
               <strong>{React.int(summary.penalties)}</strong>
+            </div>
+            <div className="record-row" title={Copy.proppedUpGamesDescription(language)}>
+              <span>{React.string(Copy.proppedUpGamesLabel(language))}</span>
+              <strong>{React.int(summary.propped_up_games)}</strong>
             </div>
           </div>
         | None => <p>{React.string(Copy.noData(language))}</p>

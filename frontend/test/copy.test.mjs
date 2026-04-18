@@ -19,3 +19,11 @@ test("season labels render full season ranges in Turkish", () => {
   assert.equal(Copy.latestSeasonStandingsTitle(turkish, "2025"), "2025-2026 puan tablosu");
   assert.equal(Copy.navLatestSeason(turkish, "2025"), "2025-2026 Sezonu");
 });
+
+test("propped up games labels are localized", () => {
+  const english = Locale.fromString("en");
+  const turkish = Locale.fromString("tr");
+
+  assert.equal(Copy.proppedUpGamesLabel(english), "Propped up games");
+  assert.equal(Copy.proppedUpGamesLabel(turkish), "Kollandığı maçlar");
+});

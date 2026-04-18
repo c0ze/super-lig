@@ -48,3 +48,12 @@ test("penalty goals are labeled when the scraper marks them explicitly", () => {
     "Penalty",
   );
 });
+
+test("missed penalties keep the penalty context in the timeline", () => {
+  const english = Locale.fromString("en");
+
+  assert.equal(
+    MatchTimeline.detailText(english, "Missed Penalty", "Talisca", "Mateusz Lis"),
+    "Missed penalty • Goalkeeper: Mateusz Lis",
+  );
+});

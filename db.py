@@ -4,6 +4,19 @@ from pathlib import Path
 DB_DIR = Path("data")
 DB_PATH = DB_DIR / "super_lig.db"
 
+EVENT_COLUMN_DEFINITIONS = {
+    "minute_label": "TEXT",
+    "minute_base": "INTEGER",
+    "minute_extra": "INTEGER",
+    "event_order": "INTEGER",
+    "event_subtype": "TEXT",
+    "event_detail": "TEXT",
+    "home_score_before": "INTEGER",
+    "away_score_before": "INTEGER",
+    "home_score_after": "INTEGER",
+    "away_score_after": "INTEGER",
+}
+
 SCHEMA_STATEMENTS = (
     """
     CREATE TABLE IF NOT EXISTS matches (
@@ -23,10 +36,20 @@ SCHEMA_STATEMENTS = (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         match_id TEXT NOT NULL,
         minute INTEGER,
+        minute_label TEXT,
+        minute_base INTEGER,
+        minute_extra INTEGER,
         team TEXT,
         event_type TEXT,
+        event_order INTEGER,
+        event_subtype TEXT,
+        event_detail TEXT,
         player_1 TEXT,
         player_2 TEXT,
+        home_score_before INTEGER,
+        away_score_before INTEGER,
+        home_score_after INTEGER,
+        away_score_after INTEGER,
         FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
     )
     """,
@@ -44,13 +67,28 @@ def _drop_description_column(conn: sqlite3.Connection) -> None:
         conn.execute("ALTER TABLE events DROP COLUMN description")
 
 
+def _ensure_event_columns(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(events)").fetchall()}
+    for column, column_type in EVENT_COLUMN_DEFINITIONS.items():
+        if column not in cols:
+            conn.execute(f"ALTER TABLE events ADD COLUMN {column} {column_type}")
+
+
 def init_db() -> None:
     DB_DIR.mkdir(parents=True, exist_ok=True)
     with get_connection() as conn:
         for stmt in SCHEMA_STATEMENTS:
             conn.execute(stmt)
         _drop_description_column(conn)
+        _ensure_event_columns(conn)
         conn.commit()
+
+
+def delete_unplayed_matches(conn: sqlite3.Connection) -> int:
+    cursor = conn.execute(
+        "DELETE FROM matches WHERE home_score < 0 OR away_score < 0"
+    )
+    return cursor.rowcount
 
 
 def get_connection() -> sqlite3.Connection:

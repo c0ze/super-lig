@@ -13,9 +13,12 @@ type matchSummary = {
 type eventRow = {
   id: int,
   minute: int,
+  minute_label: string,
   team_side: string,
   team_name: string,
   event_type: string,
+  event_subtype: string,
+  event_detail: string,
   player_1: string,
   player_2: string,
 }
@@ -49,11 +52,12 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
       [matchId],
     )
     let events: array<eventRow> = Database.runQuery(
-      "SELECT e.id, e.minute, e.team AS team_side, " ++
+      "SELECT e.id, COALESCE(e.minute, 0) AS minute, COALESCE(e.minute_label, '') AS minute_label, e.team AS team_side, " ++
       "CASE WHEN e.team = 'Home' THEN m.home_team WHEN e.team = 'Away' THEN m.away_team ELSE e.team END AS team_name, " ++
-      "e.event_type, COALESCE(e.player_1, '') AS player_1, COALESCE(e.player_2, '') AS player_2 " ++
+      "e.event_type, COALESCE(e.event_subtype, '') AS event_subtype, COALESCE(e.event_detail, '') AS event_detail, " ++
+      "COALESCE(e.player_1, '') AS player_1, COALESCE(e.player_2, '') AS player_2 " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
-      "WHERE e.match_id = ? ORDER BY e.minute ASC, e.id ASC",
+      "WHERE e.match_id = ? ORDER BY COALESCE(e.minute, 0) ASC, COALESCE(e.event_order, e.id) ASC, e.id ASC",
       [matchId],
     )
 
@@ -173,13 +177,21 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
             } else {
               <div className="timeline-list">
                 {React.array(state.events->Array.map(event => {
-                  let detail = MatchTimeline.detailText(language, event.event_type, event.player_1, event.player_2)
+                  let detail =
+                    MatchTimeline.detailTextWithMetadata(
+                      language,
+                      event.event_type,
+                      event.event_subtype,
+                      event.event_detail,
+                      event.player_1,
+                      event.player_2,
+                    )
 
                   <article
                     key={Int.toString(event.id)}
                     className={"timeline-item " ++ MatchTimeline.sideClass(event.team_side)}>
                     <div className="timeline-minute">
-                      {React.string(MatchTimeline.minuteLabel(event.minute))}
+                      {React.string(MatchTimeline.minuteLabelWithFallback(event.minute_label, event.minute))}
                     </div>
                     <div className="timeline-track">
                       <span className={"timeline-node " ++ MatchTimeline.toneClass(event.event_type)} />

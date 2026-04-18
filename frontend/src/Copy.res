@@ -304,6 +304,18 @@ let penaltiesLabel = language =>
   | #en => "Penalties"
   }
 
+let proppedUpGamesLabel = language =>
+  switch language {
+  | #tr => "Kollandığı maçlar"
+  | #en => "Propped up games"
+  }
+
+let proppedUpGamesDescription = language =>
+  switch language {
+  | #tr => "Skor eşitken veya gerideyken penaltı kazandığı ya da rakibe kırmızı kart gösterilen maçlar."
+  | #en => "Games where it was given a penalty or the opponent saw red while the score was level or behind."
+  }
+
 let substitutionsLabel = language =>
   switch language {
   | #tr => "Değişiklik"
