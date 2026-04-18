@@ -431,6 +431,17 @@ button {
   transition: background-color 120ms ease;
 }
 
+.metric-card-button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.metric-card-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .metric-card:hover {
   background: var(--surface-muted);
 }
@@ -754,6 +765,51 @@ button {
   font-variant-numeric: tabular-nums;
   font-size: 0.95rem;
   font-weight: 500;
+  color: var(--text-strong);
+}
+
+.tab-strip {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.season-tab {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.season-tab:hover {
+  border-color: var(--accent);
+}
+
+.season-tab.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.season-tab span {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.season-tab strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--text-strong);
 }
 

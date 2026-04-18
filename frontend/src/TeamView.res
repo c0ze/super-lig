@@ -22,6 +22,11 @@ type proppedUpRow = {
   propped_up_games: int,
 }
 
+type seasonRow = {
+  season: string,
+  games: int,
+}
+
 type scorerRow = {
   player: string,
   goals: int,
@@ -40,12 +45,14 @@ type matchRow = {
 type state = {
   summary: option<teamSummary>,
   scorers: array<scorerRow>,
+  seasons: array<seasonRow>,
   matches: array<matchRow>,
 }
 
 let emptyState = {
   summary: None,
   scorers: [],
+  seasons: [],
   matches: [],
 }
 
@@ -60,6 +67,7 @@ let didTeamLose = (team, match) =>
 @react.component
 let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
   let (state, setState) = React.useState(() => emptyState)
+  let (selectedSeason, setSelectedSeason) = React.useState(() => "")
 
   React.useEffect1(() => {
     let summaries: array<teamSummary> = Database.runQuery(
@@ -91,12 +99,12 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "GROUP BY e.player_1 ORDER BY goals DESC, e.player_1 ASC LIMIT 8",
       [team, team],
     )
-    let matches: array<matchRow> = Database.runQuery(
-      "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
-      "FROM matches WHERE home_team = ? OR away_team = ? " ++
-      "ORDER BY season DESC, matchday DESC, home_team ASC",
+    let seasons: array<seasonRow> = Database.runQuery(
+      TeamQueries.teamMatchSeasonsSql,
       [team, team],
     )
+    let defaultSeason =
+      Js.Array2.length(seasons) > 0 ? Js.Array2.unsafe_get(seasons, 0).season : ""
 
     let summary =
       if Js.Array2.length(summaries) > 0 {
@@ -128,11 +136,29 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
     setState(_ => {
       summary,
       scorers,
+      seasons,
+      matches: [],
+    })
+    setSelectedSeason(_ => defaultSeason)
+
+    None
+  }, [team])
+
+  React.useEffect2(() => {
+    let matches: array<matchRow> =
+      if selectedSeason == "" {
+        []
+      } else {
+        Database.runQuery(TeamQueries.teamMatchesBySeasonSql, [team, team, selectedSeason])
+      }
+
+    setState(current => {
+      ...current,
       matches,
     })
 
     None
-  }, [team])
+  }, (team, selectedSeason))
 
   let recentForm = state.matches->Array.filterWithIndex((_, index) => index < 5)
 
@@ -159,6 +185,13 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
             <span key={match.id} className={className}>{React.string(label)}</span>
           }))}
         </div>
+        {if selectedSeason != "" {
+          <span className="hero-highlight-label">
+            {React.string(SeasonLabel.format(selectedSeason))}
+          </span>
+        } else {
+          React.null
+        }}
       </div>
     </section>
 
@@ -193,12 +226,13 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           <span className="metric-label">{React.string(Copy.penaltiesLabel(language))}</span>
           <strong>{React.int(summary.penalties)}</strong>
         </article>
-        <article
-          className="metric-card"
+        <button
+          className="metric-card metric-card-button"
+          onClick={_ => navigate(Route.proppedUp(team))}
           title={Copy.proppedUpGamesDescription(language)}>
           <span className="metric-label">{React.string(Copy.proppedUpGamesLabel(language))}</span>
           <strong>{React.int(summary.propped_up_games)}</strong>
-        </article>
+        </button>
       </section>
     | None => React.null
     }}
@@ -278,7 +312,26 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
 
       <article className="section-card section-span-3">
         <div className="section-heading">
-          <h2>{React.string(Copy.matchHistoryTitle(language))}</h2>
+          <h2>
+            {React.string(
+              selectedSeason == ""
+                ? Copy.matchHistoryTitle(language)
+                : SeasonLabel.format(selectedSeason) ++ " • " ++ Copy.matchHistoryTitle(language),
+            )}
+          </h2>
+        </div>
+        <div className="tab-strip">
+          {React.array(state.seasons->Array.map(row => {
+            let isActive = row.season == selectedSeason
+
+            <button
+              key={row.season}
+              className={isActive ? "season-tab active" : "season-tab"}
+              onClick={_ => setSelectedSeason(_ => row.season)}>
+              <span>{React.string(SeasonLabel.format(row.season))}</span>
+              <strong>{React.int(row.games)}</strong>
+            </button>
+          }))}
         </div>
         <div className="match-list">
           {React.array(state.matches->Array.map(match => {

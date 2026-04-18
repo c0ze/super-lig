@@ -316,6 +316,72 @@ let proppedUpGamesDescription = language =>
   | #en => "Games where it was given a penalty or the opponent saw red while the score was level or behind."
   }
 
+let openProppedUpGames = language =>
+  switch language {
+  | #tr => "Kollandığı maçları aç"
+  | #en => "Open propped up games"
+  }
+
+let proppedUpPageTitle = (language, team) =>
+  switch language {
+  | #tr => team ++ " kollandığı maçlar"
+  | #en => team ++ " propped up games"
+  }
+
+let proppedUpPageSubtitle = language =>
+  switch language {
+  | #tr => "Sezonlara göre ayrılan liste, skor eşitken veya gerideyken gelen penaltı ve rakip kırmızılar üzerinden hazırlanır."
+  | #en => "A season-by-season list of matches where a penalty or opponent red arrived while the score was level or behind."
+  }
+
+let backToTeam = (language, team) =>
+  switch language {
+  | #tr => team ++ " arşivine dön"
+  | #en => "Back to " ++ team ++ " archive"
+  }
+
+let seasonFilterTitle = language =>
+  switch language {
+  | #tr => "Sezonlar"
+  | #en => "Seasons"
+  }
+
+let qualifyingMatchesTitle = language =>
+  switch language {
+  | #tr => "Maç listesi"
+  | #en => "Match list"
+  }
+
+let noProppedUpGamesTitle = language =>
+  switch language {
+  | #tr => "Kayıt bulunamadı"
+  | #en => "No matches found"
+  }
+
+let noProppedUpGamesSubtitle = language =>
+  switch language {
+  | #tr => "Bu takım için seçilen kurala uyan kollandığı maç bulunamadı."
+  | #en => "No propped up games were found for this team under the current rule."
+  }
+
+let proppedUpPenaltyReason = language =>
+  switch language {
+  | #tr => "Penaltı"
+  | #en => "Penalty"
+  }
+
+let proppedUpRedCardReason = language =>
+  switch language {
+  | #tr => "Rakibe kırmızı"
+  | #en => "Opponent red"
+  }
+
+let proppedUpCombinedReason = language =>
+  switch language {
+  | #tr => "Penaltı + rakibe kırmızı"
+  | #en => "Penalty + opponent red"
+  }
+
 let substitutionsLabel = language =>
   switch language {
   | #tr => "Değişiklik"

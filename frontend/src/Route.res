@@ -1,4 +1,4 @@
-type kind = [#dashboard | #season | #team | #match | #notFound]
+type kind = [#dashboard | #season | #team | #match | #proppedUp | #notFound]
 
 type t = {
   kind: kind,
@@ -9,6 +9,7 @@ let dashboard = {kind: #dashboard, param: None}
 let season = param => {kind: #season, param: Some(param)}
 let team = param => {kind: #team, param: Some(param)}
 let match = param => {kind: #match, param: Some(param)}
+let proppedUp = param => {kind: #proppedUp, param: Some(param)}
 let notFound = param => {kind: #notFound, param: Some(param)}
 
 let stripHashPrefix = hash =>
@@ -66,6 +67,14 @@ let parseHash = hash => {
     | "match" => match(second->decodeURIComponent)
     | _ => notFound(cleaned)
     }
+  | 3 =>
+    let first = segments->Js.Array2.unsafe_get(0)
+    let second = segments->Js.Array2.unsafe_get(1)
+    let third = segments->Js.Array2.unsafe_get(2)
+    switch (first, third) {
+    | ("team", "propped-up") => proppedUp(second->decodeURIComponent)
+    | _ => notFound(cleaned)
+    }
   | _ => cleaned == "" ? dashboard : notFound(cleaned)
   }
 }
@@ -86,6 +95,11 @@ let toHash = route =>
   | #match =>
     switch route.param {
     | Some(id) => "#/match/" ++ id->encodeURIComponent
+    | None => "#/"
+    }
+  | #proppedUp =>
+    switch route.param {
+    | Some(team) => "#/team/" ++ team->encodeURIComponent ++ "/propped-up"
     | None => "#/"
     }
   | #notFound =>

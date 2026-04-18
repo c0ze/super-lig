@@ -31,6 +31,13 @@ test("match hash resolves to match route", () => {
   assert.equal(route.param, "4393440");
 });
 
+test("propped up hash resolves to the team drill-down route", () => {
+  const route = Route.parseHash("#/team/Fenerbahce%20SK/propped-up");
+
+  assert.equal(route.kind, "proppedUp");
+  assert.equal(route.param, "Fenerbahce SK");
+});
+
 test("route hashes encode team names safely", () => {
   const hash = Route.toHash(Route.team("Göztepe"));
 
@@ -41,6 +48,12 @@ test("route hashes encode match ids safely", () => {
   const hash = Route.toHash(Route.match("4393440"));
 
   assert.equal(hash, "#/match/4393440");
+});
+
+test("route hashes encode propped up team routes safely", () => {
+  const hash = Route.toHash(Route.proppedUp("Göztepe"));
+
+  assert.equal(hash, "#/team/G%C3%B6ztepe/propped-up");
 });
 
 test("unknown hashes resolve to not-found", () => {
