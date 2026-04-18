@@ -30,11 +30,10 @@ let make = () => {
       if success {
         setDbState(_ => #ready)
 
-        let rawLatestSeason = Database.runQuery(
+        let latestSeasonRows: array<latestSeasonRow> = Database.runQuery(
           "SELECT MAX(season) AS latest_season FROM matches",
           [],
         )
-        let latestSeasonRows: array<latestSeasonRow> = Obj.magic(rawLatestSeason)
 
         if Js.Array2.length(latestSeasonRows) > 0 {
           setLatestSeason(_ => Js.Array2.unsafe_get(latestSeasonRows, 0).latest_season)

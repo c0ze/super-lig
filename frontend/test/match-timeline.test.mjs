@@ -31,11 +31,20 @@ test("second yellow cards use red-card tone in the timeline", () => {
   assert.equal(MatchTimeline.toneClass("Second Yellow Card"), "danger");
 });
 
-test("penalty goals are labeled when the data marks them", () => {
+test("penalty goals are labeled via the player_1 == player_2 heuristic", () => {
   const english = Locale.fromString("en");
 
   assert.equal(
     MatchTimeline.detailText(english, "Goal", "Talisca", "Talisca"),
+    "Penalty",
+  );
+});
+
+test("penalty goals are labeled when the scraper marks them explicitly", () => {
+  const english = Locale.fromString("en");
+
+  assert.equal(
+    MatchTimeline.detailText(english, "Penalty Goal", "Talisca", ""),
     "Penalty",
   );
 });

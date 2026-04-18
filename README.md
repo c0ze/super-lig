@@ -82,15 +82,14 @@ Stores a timeline of match events.
 Columns:
 
 - `id`
-- `match_id`
+- `match_id` (FK → `matches.id`, `ON DELETE CASCADE`)
 - `minute`
-- `team`
-- `event_type`
+- `team` (`"Home"` or `"Away"`)
+- `event_type` (`Goal`, `Penalty Goal`, `Missed Penalty`, `Yellow Card`, `Second Yellow Card`, `Red Card`, `Substitution`)
 - `player_1`
 - `player_2`
-- `description`
 
-`team` is currently stored as `"Home"` or `"Away"` by the scraper and mapped back to club names in frontend SQL queries.
+`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
 
 ## Prerequisites
 
@@ -154,10 +153,10 @@ Initialize the schema:
 python db.py
 ```
 
-Run the scraper as currently configured in `scraper.py`:
+Run the scraper for a year range (defaults: 2010–2025):
 
 ```bash
-python scraper.py
+python scraper.py --start 2010 --end 2025
 ```
 
 ### Frontend
@@ -223,12 +222,9 @@ The scraper pipeline is:
 
 Important notes:
 
-- `run_scraper(start_year, end_year)` is the main entrypoint
-- The current `__main__` block in `scraper.py` is set to `run_scraper(2025, 2026)`
+- CLI entrypoint: `python scraper.py --start <year> --end <year>` (inclusive range, defaults 2010–2025)
 - `get_scraped_match_ids()` skips fixtures already scraped with a valid score
-- Event descriptions are currently stored as empty strings
-
-If you want to rebuild the archive for a different year range, change the call at the bottom of `scraper.py` or invoke `run_scraper(...)` manually.
+- Re-scraping a match deletes and re-inserts its events, so timelines cannot duplicate
 
 ## Frontend Architecture
 
@@ -316,8 +312,8 @@ That means deployment should not rely on manually copying `data/super_lig.db`.
 - Match `date` values are raw strings from the scraped source and are not normalized yet.
 - `sql.js` currently emits Vite warnings about `node:fs` and `node:crypto` during build. The build still succeeds.
 - `frontend/src/*.res.js` files are generated output and are gitignored.
-- There is a root-level `package-lock.json` that is not part of the frontend build workflow.
 - The scraper is source-structure-sensitive and can break if Transfermarkt changes HTML classes or timeline markup.
+- Transfermarkt sometimes renames clubs across seasons, so a team's history in `TeamView` can fragment across name variants.
 
 ## Recommended Workflow
 

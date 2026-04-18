@@ -26,7 +26,9 @@ let make = (
 
   <div
     className="match-card spacious match-card-interactive"
+    role="button"
     tabIndex={0}
+    ariaLabel={homeTeam ++ " " ++ Int.toString(homeScore) ++ " : " ++ Int.toString(awayScore) ++ " " ++ awayTeam}
     onClick={_ => openMatch()}
     onKeyDown={handleCardKeyDown}>
     <div className="match-card-topline">

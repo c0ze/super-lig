@@ -268,6 +268,12 @@ let matchQuickLinksTitle = language =>
   | #en => "Quick links"
   }
 
+let viewOnTransfermarkt = language =>
+  switch language {
+  | #tr => "Transfermarkt'ta aç"
+  | #en => "View on Transfermarkt"
+  }
+
 let timelineEventCountLabel = language =>
   switch language {
   | #tr => "Zaman çizelgesi olayı"

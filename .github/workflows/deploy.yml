@@ -23,7 +23,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./frontend
-        run: npm ci || npm install
+        run: npm ci
 
       - name: Verify and Build Application
         working-directory: ./frontend

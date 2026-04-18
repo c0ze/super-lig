@@ -69,7 +69,7 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
   let (state, setState) = React.useState(() => emptyState)
 
   React.useEffect0(() => {
-    let rawOverview = Database.runQuery(
+    let overviews: array<overview> = Database.runQuery(
       "SELECT COUNT(DISTINCT season) AS seasons, COUNT(*) AS matches, " ++
       "SUM(home_score + away_score) AS goals, " ++
       "(SELECT COUNT(*) FROM events) AS events, " ++
@@ -77,13 +77,13 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
       "FROM matches",
       [],
     )
-    let rawSeasonCards = Database.runQuery(
+    let seasonCards: array<seasonCard> = Database.runQuery(
       "SELECT season, COUNT(*) AS match_count, SUM(home_score + away_score) AS goals, " ++
       "printf('%.2f', 1.0 * SUM(home_score + away_score) / COUNT(*)) AS goals_per_match " ++
       "FROM matches GROUP BY season ORDER BY season DESC",
       [],
     )
-    let rawStandings = Database.runQuery(
+    let latestStandings: array<standingRow> = Database.runQuery(
       "SELECT team, SUM(played) AS played, SUM(wins) AS wins, SUM(draws) AS draws, " ++
       "SUM(losses) AS losses, SUM(goals_for) AS goals_for, SUM(goals_against) AS goals_against, " ++
       "SUM(goals_for) - SUM(goals_against) AS goal_diff, SUM(points) AS points " ++
@@ -106,33 +106,27 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
       ") GROUP BY team ORDER BY points DESC, goal_diff DESC, goals_for DESC, team ASC",
       [],
     )
-    let rawTopScorers = Database.runQuery(
+    let topScorers: array<scorerRow> = Database.runQuery(
       "SELECT e.player_1 AS player, " ++
       "CASE WHEN e.team = 'Home' THEN m.home_team WHEN e.team = 'Away' THEN m.away_team ELSE e.team END AS team_name, " ++
       "COUNT(*) AS goals " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
       "WHERE e.event_type IN ('Goal', 'Penalty Goal') AND e.player_1 IS NOT NULL AND e.player_1 != '' " ++
+      "AND m.season = (SELECT MAX(season) FROM matches) " ++
       "GROUP BY e.player_1, team_name ORDER BY goals DESC, e.player_1 ASC LIMIT 8",
       [],
     )
-    let rawRecentMatches = Database.runQuery(
+    let recentMatches: array<matchRow> = Database.runQuery(
       "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
       "FROM matches WHERE season = (SELECT MAX(season) FROM matches) " ++
       "ORDER BY matchday DESC, home_team ASC LIMIT 6",
       [],
     )
-    let rawEventBreakdown = Database.runQuery(
+    let eventBreakdown: array<eventRow> = Database.runQuery(
       "SELECT event_type, COUNT(*) AS count FROM events " ++
       "GROUP BY event_type ORDER BY count DESC LIMIT 5",
       [],
     )
-
-    let overviews: array<overview> = Obj.magic(rawOverview)
-    let seasonCards: array<seasonCard> = Obj.magic(rawSeasonCards)
-    let latestStandings: array<standingRow> = Obj.magic(rawStandings)
-    let topScorers: array<scorerRow> = Obj.magic(rawTopScorers)
-    let recentMatches: array<matchRow> = Obj.magic(rawRecentMatches)
-    let eventBreakdown: array<eventRow> = Obj.magic(rawEventBreakdown)
 
     setState(_ => {
       overview: Js.Array2.length(overviews) > 0 ? Some(Js.Array2.unsafe_get(overviews, 0)) : None,

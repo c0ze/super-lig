@@ -57,7 +57,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
   let (state, setState) = React.useState(() => emptyState)
 
   React.useEffect1(() => {
-    let rawSummary = Database.runQuery(
+    let summaries: array<teamSummary> = Database.runQuery(
       "SELECT COUNT(*) AS matches, " ++
       "SUM(CASE WHEN (home_team = ? AND home_score > away_score) OR (away_team = ? AND away_score > home_score) THEN 1 ELSE 0 END) AS wins, " ++
       "SUM(CASE WHEN home_score = away_score THEN 1 ELSE 0 END) AS draws, " ++
@@ -68,7 +68,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "FROM matches WHERE home_team = ? OR away_team = ?",
       [team, team, team, team, team, team, team, team],
     )
-    let rawEventSummary = Database.runQuery(
+    let eventSummaries: array<teamEventSummary> = Database.runQuery(
       "SELECT " ++
       "COALESCE(SUM(CASE WHEN e.event_type = 'Yellow Card' THEN 1 ELSE 0 END), 0) AS yellow_cards, " ++
       "COALESCE(SUM(CASE WHEN e.event_type IN ('Red Card', 'Second Yellow Card') THEN 1 ELSE 0 END), 0) AS red_cards, " ++
@@ -77,7 +77,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "WHERE (e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?)",
       [team, team],
     )
-    let rawScorers = Database.runQuery(
+    let scorers: array<scorerRow> = Database.runQuery(
       "SELECT e.player_1 AS player, COUNT(*) AS goals " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
       "WHERE e.event_type IN ('Goal', 'Penalty Goal') AND e.player_1 IS NOT NULL AND e.player_1 != '' " ++
@@ -85,17 +85,12 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "GROUP BY e.player_1 ORDER BY goals DESC, e.player_1 ASC LIMIT 8",
       [team, team],
     )
-    let rawMatches = Database.runQuery(
+    let matches: array<matchRow> = Database.runQuery(
       "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
       "FROM matches WHERE home_team = ? OR away_team = ? " ++
       "ORDER BY season DESC, matchday DESC, home_team ASC",
       [team, team],
     )
-
-    let summaries: array<teamSummary> = Obj.magic(rawSummary)
-    let eventSummaries: array<teamEventSummary> = Obj.magic(rawEventSummary)
-    let scorers: array<scorerRow> = Obj.magic(rawScorers)
-    let matches: array<matchRow> = Obj.magic(rawMatches)
 
     let summary =
       if Js.Array2.length(summaries) > 0 {

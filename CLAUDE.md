@@ -2,103 +2,53 @@
 
 Project-specific instructions for Claude Code / Codex-style agents.
 
-## What This Repo Is
+See [AGENTS.md](AGENTS.md) for the full handoff notes — constraints, key files,
+non-obvious implementation details, and the validation checklist. Everything
+below is a quick-reference; prefer `AGENTS.md` when they conflict.
 
-This is a static Super Lig data app with:
+## Shape
 
-- Python scraping and SQLite persistence at the repo root
-- A ReScript frontend in `frontend/`
-- GitHub Pages deployment with a custom domain
+- Python scraper + SQLite DB at the repo root
+- ReScript/React/Vite frontend in [frontend/](frontend/) that reads the DB in-browser via `sql.js`
+- GitHub Pages deployment at `super-lig.arda.tr`
 
-The frontend reads `data/super_lig.db` in the browser via `sql.js`.
+## Hard rules
 
-## First Files To Read
-
-If you are starting a task, inspect these first:
-
-- `README.md`
-- `AGENTS.md`
-- `frontend/src/App.res`
-- `frontend/src/Route.res`
-- `frontend/package.json`
-- `scraper.py`
-- `db.py`
-
-## Working Rules
-
-### Frontend
-
-- Treat ReScript source as authoritative
 - Edit `.res` files, not generated `.res.js`
-- Preserve hash routing
-- Preserve TR / EN support unless explicitly asked otherwise
-
-### Data / Scraper
-
-- `matches` and `events` are the contract the frontend depends on
-- If you change schema or event semantics, audit frontend SQL queries too
-- Be careful with Transfermarkt-specific selectors in `scraper.py`
-
-### Deployment
-
-- GitHub Pages deploys from `frontend/dist`
-- The DB and WASM are copied into `frontend/public` by `frontend/scripts/sync-public-assets.mjs`
-- `npm run verify:deploy` is the expected final validation path
+- Preserve hash routing and TR/EN toggle
+- Keep the `sql.js/dist/sql-wasm.js` import in [frontend/src/SqlHelper.js](frontend/src/SqlHelper.js)
+- `matches` and `events` are the contract with the frontend — audit `.res` SQL
+  after any schema change
 
 ## Commands
 
-### Python
+Python:
 
 ```bash
 source venv/bin/activate
 python db.py
-python scraper.py
+python scraper.py --start 2010 --end 2025
 ```
 
-### Frontend
+Frontend (run from [frontend/](frontend/)):
 
 ```bash
-cd frontend
 npm install
 npm run dev
 npm test
 npm run verify:deploy
 ```
 
-## Important Notes
+## Validation
 
-- Keep the explicit `sql.js/dist/sql-wasm.js` import in `frontend/src/SqlHelper.js`
-- Match routes live at `#/match/<id>`
-- Team routes live at `#/team/<name>`
-- Season routes live at `#/season/<year>`
-- `frontend/src/*.res.js` is generated and should not be hand-maintained
+Do not claim frontend work is done without running `npm run verify:deploy` in
+[frontend/](frontend/). It covers ReScript compile, tests, asset sync, and a
+production Vite build.
 
-## If You Change Frontend Behavior
+## Known sharp edges
 
-Run:
-
-```bash
-cd frontend
-npm run verify:deploy
-```
-
-Do not claim the work is done without at least compiling ReScript and producing a production build.
-
-## If You Change Data Shape
-
-Check:
-
-- `frontend/src/Dashboard.res`
-- `frontend/src/SeasonView.res`
-- `frontend/src/TeamView.res`
-- `frontend/src/MatchView.res`
-
-These pages all issue direct SQL queries against the embedded schema.
-
-## Known Sharp Edges
-
-- `sql.js` produces Vite warnings during build, but builds still succeed
-- `matches.date` is raw scraped text, not normalized date data
-- `events.description` is usually empty
-- The scraper main block is currently configured for `run_scraper(2025, 2026)`
-
+- `matches.date` is raw scraped text, not normalized dates
+- Transfermarkt renames some clubs across seasons, so `TeamView` history can
+  fragment
+- Vite warns about `node:fs` / `node:crypto` from `sql-wasm.js` — build still
+  succeeds

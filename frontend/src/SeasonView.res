@@ -53,14 +53,14 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
   let (state, setState) = React.useState(() => emptyState)
 
   React.useEffect1(() => {
-    let rawSummary = Database.runQuery(
+    let summaries: array<seasonSummary> = Database.runQuery(
       "SELECT COUNT(*) AS matches, SUM(home_score + away_score) AS goals, " ++
       "COUNT(DISTINCT home_team) AS teams, MAX(matchday) AS max_matchday, " ++
       "printf('%.2f', 1.0 * SUM(home_score + away_score) / COUNT(*)) AS goals_per_match " ++
       "FROM matches WHERE season = ?",
       [year],
     )
-    let rawStandings = Database.runQuery(
+    let standings: array<standingRow> = Database.runQuery(
       "SELECT team, SUM(played) AS played, SUM(wins) AS wins, SUM(draws) AS draws, " ++
       "SUM(losses) AS losses, SUM(goals_for) AS goals_for, SUM(goals_against) AS goals_against, " ++
       "SUM(goals_for) - SUM(goals_against) AS goal_diff, SUM(points) AS points " ++
@@ -83,7 +83,7 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       ") GROUP BY team ORDER BY points DESC, goal_diff DESC, goals_for DESC, team ASC",
       [year, year],
     )
-    let rawScorers = Database.runQuery(
+    let scorers: array<scorerRow> = Database.runQuery(
       "SELECT e.player_1 AS player, " ++
       "CASE WHEN e.team = 'Home' THEN m.home_team WHEN e.team = 'Away' THEN m.away_team ELSE e.team END AS team_name, " ++
       "COUNT(*) AS goals " ++
@@ -92,16 +92,11 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "GROUP BY e.player_1, team_name ORDER BY goals DESC, e.player_1 ASC LIMIT 8",
       [year],
     )
-    let rawMatches = Database.runQuery(
+    let matches: array<matchRow> = Database.runQuery(
       "SELECT id, date, matchday, home_team, away_team, home_score, away_score " ++
       "FROM matches WHERE season = ? ORDER BY matchday DESC, home_team ASC",
       [year],
     )
-
-    let summaries: array<seasonSummary> = Obj.magic(rawSummary)
-    let standings: array<standingRow> = Obj.magic(rawStandings)
-    let scorers: array<scorerRow> = Obj.magic(rawScorers)
-    let matches: array<matchRow> = Obj.magic(rawMatches)
 
     setState(_ => {
       summary: Js.Array2.length(summaries) > 0 ? Some(Js.Array2.unsafe_get(summaries, 0)) : None,

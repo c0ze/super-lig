@@ -7,6 +7,7 @@ type matchSummary = {
   away_team: string,
   home_score: int,
   away_score: int,
+  url: string,
 }
 
 type eventRow = {
@@ -17,7 +18,6 @@ type eventRow = {
   event_type: string,
   player_1: string,
   player_2: string,
-  description: string,
 }
 
 type state = {
@@ -43,23 +43,19 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
   let (state, setState) = React.useState(() => emptyState)
 
   React.useEffect1(() => {
-    let rawSummary = Database.runQuery(
-      "SELECT id, season, matchday, date, home_team, away_team, home_score, away_score " ++
+    let summaries: array<matchSummary> = Database.runQuery(
+      "SELECT id, season, matchday, date, home_team, away_team, home_score, away_score, url " ++
       "FROM matches WHERE id = ? LIMIT 1",
       [matchId],
     )
-    let rawEvents = Database.runQuery(
+    let events: array<eventRow> = Database.runQuery(
       "SELECT e.id, e.minute, e.team AS team_side, " ++
       "CASE WHEN e.team = 'Home' THEN m.home_team WHEN e.team = 'Away' THEN m.away_team ELSE e.team END AS team_name, " ++
-      "e.event_type, COALESCE(e.player_1, '') AS player_1, COALESCE(e.player_2, '') AS player_2, " ++
-      "COALESCE(e.description, '') AS description " ++
+      "e.event_type, COALESCE(e.player_1, '') AS player_1, COALESCE(e.player_2, '') AS player_2 " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
       "WHERE e.match_id = ? ORDER BY e.minute ASC, e.id ASC",
       [matchId],
     )
-
-    let summaries: array<matchSummary> = Obj.magic(rawSummary)
-    let events: array<eventRow> = Obj.magic(rawEvents)
 
     setState(_ => {
       summary: Js.Array2.length(summaries) > 0 ? Some(Js.Array2.unsafe_get(summaries, 0)) : None,
@@ -136,6 +132,14 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
                 <span>{React.string(Copy.rawDateLabel(language))}</span>
                 <strong>{React.string(summary.date)}</strong>
               </div>
+              {summary.url == ""
+                ? React.null
+                : <div className="record-row">
+                    <span>{React.string("Source")}</span>
+                    <a href={summary.url} target="_blank" rel="noreferrer noopener">
+                      {React.string(Copy.viewOnTransfermarkt(language))}
+                    </a>
+                  </div>}
             </div>
           </div>
         </section>
@@ -170,8 +174,6 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
               <div className="timeline-list">
                 {React.array(state.events->Array.map(event => {
                   let detail = MatchTimeline.detailText(language, event.event_type, event.player_1, event.player_2)
-                  let description =
-                    detail != "" ? detail : event.description
 
                   <article
                     key={Int.toString(event.id)}
@@ -190,8 +192,8 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
                         </span>
                       </div>
                       <strong>{React.string(MatchTimeline.primaryText(event.event_type, event.player_1))}</strong>
-                      {if description != "" {
-                        <p>{React.string(description)}</p>
+                      {if detail != "" {
+                        <p>{React.string(detail)}</p>
                       } else {
                         React.null
                       }}
