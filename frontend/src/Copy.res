@@ -262,6 +262,18 @@ let playerMatchHistoryTitle = language =>
   | #en => "Contribution matches"
   }
 
+let squadTitle = language =>
+  switch language {
+  | #tr => "Kadro"
+  | #en => "Squad"
+  }
+
+let squadSubtitle = language =>
+  switch language {
+  | #tr => "Olay akışındaki oyuncular üzerinden oluşturulan sezon kadrosu. Sessiz 90 dakika oynayan isimler eksik kalabilir."
+  | #en => "Season squad derived from timeline events. Quiet full-match appearances can still be missing."
+  }
+
 let matchHistoryTitle = language =>
   switch language {
   | #tr => "Maç geçmişi"
@@ -328,6 +340,12 @@ let penaltiesLabel = language =>
   | #en => "Penalties"
   }
 
+let appearancesLabel = language =>
+  switch language {
+  | #tr => "Maç"
+  | #en => "Apps"
+  }
+
 let assistsLabel = language =>
   switch language {
   | #tr => "Asist"
@@ -350,12 +368,6 @@ let varDeniedGoalsLabel = language =>
   switch language {
   | #tr => "VAR iptal golleri"
   | #en => "VAR denied goals"
-  }
-
-let varDeniedAssistsLabel = language =>
-  switch language {
-  | #tr => "VAR iptal asistleri"
-  | #en => "VAR denied assists"
   }
 
 let varSwingWinsLabel = language =>
@@ -596,12 +608,6 @@ let varDeniedGoalCountText = (language, count) =>
   switch language {
   | #tr => Int.toString(count) ++ " VAR iptal gol"
   | #en => Int.toString(count) ++ (count == 1 ? " VAR denied goal" : " VAR denied goals")
-  }
-
-let varDeniedAssistCountText = (language, count) =>
-  switch language {
-  | #tr => Int.toString(count) ++ " VAR iptal asist"
-  | #en => Int.toString(count) ++ (count == 1 ? " VAR denied assist" : " VAR denied assists")
   }
 
 let positionLabel = language =>

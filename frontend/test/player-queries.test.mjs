@@ -82,7 +82,7 @@ const collectRows = (db, sql, params) => {
 
 test("player summary query aggregates goals, assists, seasons, and denied goals", () => {
   const db = makeDb();
-  const rows = collectRows(db, PlayerQueries.playerSummarySql, Array(8).fill("Leroy Sane"));
+  const rows = collectRows(db, PlayerQueries.playerSummarySql, Array(6).fill("Leroy Sane"));
 
   assert.deepEqual(rows, [
     {
@@ -92,14 +92,13 @@ test("player summary query aggregates goals, assists, seasons, and denied goals"
       goals: 2,
       assists: 1,
       var_denied_goals: 1,
-      var_denied_assists: 0,
     },
   ]);
 });
 
 test("player season tabs and season match lists include contribution counts", () => {
   const db = makeDb();
-  const seasons = collectRows(db, PlayerQueries.playerMatchSeasonsSql, Array(8).fill("Leroy Sane"));
+  const seasons = collectRows(db, PlayerQueries.playerMatchSeasonsSql, Array(6).fill("Leroy Sane"));
 
   assert.deepEqual(seasons, [
     {season: "2025", games: 2},
@@ -109,12 +108,12 @@ test("player season tabs and season match lists include contribution counts", ()
   const matches = collectRows(
     db,
     PlayerQueries.playerMatchesBySeasonSql,
-    [...Array(8).fill("Leroy Sane"), "2025"],
+    [...Array(6).fill("Leroy Sane"), "2025"],
   );
 
   assert.deepEqual(
     matches.map(
-      ({id, season, matchday, team_name, goals, assists, var_denied_goals, var_denied_assists}) => ({
+      ({id, season, matchday, team_name, goals, assists, var_denied_goals}) => ({
         id,
         season,
         matchday,
@@ -122,7 +121,6 @@ test("player season tabs and season match lists include contribution counts", ()
         goals,
         assists,
         var_denied_goals,
-        var_denied_assists,
       }),
     ),
     [
@@ -134,7 +132,6 @@ test("player season tabs and season match lists include contribution counts", ()
         goals: 0,
         assists: 0,
         var_denied_goals: 1,
-        var_denied_assists: 0,
       },
       {
         id: "m2",
@@ -144,7 +141,6 @@ test("player season tabs and season match lists include contribution counts", ()
         goals: 1,
         assists: 1,
         var_denied_goals: 0,
-        var_denied_assists: 0,
       },
     ],
   );

@@ -10,16 +10,11 @@ let assistCondition =
 
 let deniedGoalPlayerCondition = deniedGoalCondition ++ " AND COALESCE(e.player_1, '') = ?"
 
-let deniedAssistPlayerCondition =
-  deniedGoalCondition ++ " AND COALESCE(e.player_2, '') = ? " ++
-  "AND COALESCE(e.player_1, '') != COALESCE(e.player_2, '')"
-
 let trackedContributionCondition =
   "(" ++
   "(" ++ goalCondition ++ ") " ++
   "OR (" ++ assistCondition ++ ") " ++
-  "OR (" ++ deniedGoalPlayerCondition ++ ") " ++
-  "OR (" ++ deniedAssistPlayerCondition ++ ")" ++
+  "OR (" ++ deniedGoalPlayerCondition ++ ")" ++
   ")"
 
 let playerEventsCte =
@@ -38,8 +33,7 @@ let playerEventsCte =
   "ELSE '' END AS team_name, " ++
   "CASE WHEN " ++ goalCondition ++ " THEN 1 ELSE 0 END AS goals, " ++
   "CASE WHEN " ++ assistCondition ++ " THEN 1 ELSE 0 END AS assists, " ++
-  "CASE WHEN " ++ deniedGoalPlayerCondition ++ " THEN 1 ELSE 0 END AS var_denied_goals, " ++
-  "CASE WHEN " ++ deniedAssistPlayerCondition ++ " THEN 1 ELSE 0 END AS var_denied_assists " ++
+  "CASE WHEN " ++ deniedGoalPlayerCondition ++ " THEN 1 ELSE 0 END AS var_denied_goals " ++
   "FROM events e " ++
   "JOIN matches m ON m.id = e.match_id " ++
   "WHERE " ++ trackedContributionCondition ++
@@ -53,8 +47,7 @@ let playerSummarySql =
   "COUNT(DISTINCT CASE WHEN team_name != '' THEN team_name END) AS clubs, " ++
   "COALESCE(SUM(goals), 0) AS goals, " ++
   "COALESCE(SUM(assists), 0) AS assists, " ++
-  "COALESCE(SUM(var_denied_goals), 0) AS var_denied_goals, " ++
-  "COALESCE(SUM(var_denied_assists), 0) AS var_denied_assists " ++
+  "COALESCE(SUM(var_denied_goals), 0) AS var_denied_goals " ++
   "FROM player_events"
 
 let playerMatchSeasonsSql =
@@ -71,8 +64,7 @@ let playerMatchesBySeasonSql =
   "COALESCE(MAX(team_name), '') AS team_name, " ++
   "COALESCE(SUM(goals), 0) AS goals, " ++
   "COALESCE(SUM(assists), 0) AS assists, " ++
-  "COALESCE(SUM(var_denied_goals), 0) AS var_denied_goals, " ++
-  "COALESCE(SUM(var_denied_assists), 0) AS var_denied_assists " ++
+  "COALESCE(SUM(var_denied_goals), 0) AS var_denied_goals " ++
   "FROM player_events " ++
   "WHERE season = ? " ++
   "GROUP BY id, season, matchday, home_team, away_team, home_score, away_score " ++

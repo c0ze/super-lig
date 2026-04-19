@@ -52,11 +52,22 @@ type matchRow = {
   away_score: int,
 }
 
+type squadRow = {
+  player: string,
+  appearances: int,
+  goals: int,
+  assists: int,
+  yellow_cards: int,
+  red_cards: int,
+  var_denied_goals: int,
+}
+
 type state = {
   summary: option<teamSummary>,
   scorers: array<scorerRow>,
   assisters: array<assisterRow>,
   seasons: array<seasonRow>,
+  squad: array<squadRow>,
   matches: array<matchRow>,
 }
 
@@ -65,8 +76,11 @@ let emptyState = {
   scorers: [],
   assisters: [],
   seasons: [],
+  squad: [],
   matches: [],
 }
+
+let teamSquadParams = (team, season) => [team, team, team, team, team, team, season]
 
 let didTeamWin = (team, match) =>
   (match.home_team == team && match.home_score > match.away_score) ||
@@ -158,6 +172,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       scorers,
       assisters,
       seasons,
+      squad: [],
       matches: [],
     })
     setSelectedSeason(_ => defaultSeason)
@@ -166,6 +181,12 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
   }, [team])
 
   React.useEffect2(() => {
+    let squad: array<squadRow> =
+      if selectedSeason == "" {
+        []
+      } else {
+        Database.runQuery(TeamQueries.teamSquadBySeasonSql, teamSquadParams(team, selectedSeason))
+      }
     let matches: array<matchRow> =
       if selectedSeason == "" {
         []
@@ -175,6 +196,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
 
     setState(current => {
       ...current,
+      squad,
       matches,
     })
 
@@ -375,10 +397,11 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           <h2>
             {React.string(
               selectedSeason == ""
-                ? Copy.matchHistoryTitle(language)
-                : SeasonLabel.format(selectedSeason) ++ " • " ++ Copy.matchHistoryTitle(language),
+                ? Copy.squadTitle(language)
+                : SeasonLabel.format(selectedSeason) ++ " • " ++ Copy.squadTitle(language),
             )}
           </h2>
+          <p>{React.string(Copy.squadSubtitle(language))}</p>
         </div>
         <div className="tab-strip">
           {React.array(state.seasons->Array.map(row => {
@@ -392,6 +415,54 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
               <strong>{React.int(row.games)}</strong>
             </button>
           }))}
+        </div>
+        {if Js.Array2.length(state.squad) == 0 {
+          <p>{React.string(Copy.noData(language))}</p>
+        } else {
+          <div className="table-shell">
+            <table className="standings-table">
+              <thead>
+                <tr>
+                  <th>{React.string(Copy.playerLabel(language))}</th>
+                  <th>{React.string(Copy.appearancesLabel(language))}</th>
+                  <th>{React.string(Copy.goalsLabel(language))}</th>
+                  <th>{React.string(Copy.assistsLabel(language))}</th>
+                  <th>{React.string(Copy.yellowCardsLabel(language))}</th>
+                  <th>{React.string(Copy.redCardsLabel(language))}</th>
+                  <th>{React.string(Copy.varDeniedGoalsLabel(language))}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {React.array(state.squad->Array.map(row => {
+                  <tr key={row.player}>
+                    <td>
+                      <button className="table-team-button" onClick={_ => navigate(Route.player(row.player))}>
+                        {React.string(row.player)}
+                      </button>
+                    </td>
+                    <td>{React.int(row.appearances)}</td>
+                    <td>{React.int(row.goals)}</td>
+                    <td>{React.int(row.assists)}</td>
+                    <td>{React.int(row.yellow_cards)}</td>
+                    <td>{React.int(row.red_cards)}</td>
+                    <td>{React.int(row.var_denied_goals)}</td>
+                  </tr>
+                }))}
+              </tbody>
+            </table>
+          </div>
+        }}
+      </article>
+
+      <article className="section-card section-span-3">
+        <div className="section-heading">
+          <h2>
+            {React.string(
+              selectedSeason == ""
+                ? Copy.matchHistoryTitle(language)
+                : SeasonLabel.format(selectedSeason) ++ " • " ++ Copy.matchHistoryTitle(language),
+            )}
+          </h2>
         </div>
         <div className="match-list">
           {React.array(state.matches->Array.map(match => {

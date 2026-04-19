@@ -20,7 +20,10 @@ There is no production backend.
 - Dashboard / season archive
 - Season detail
 - Team archive with season tabs
+- Team squad tables and assist leaders
+- Player archive with season tabs
 - Team `kollandığı maçlar` / `propped up games` drill-down
+- Team `VAR swing wins` drill-down
 - Match timeline
 - TR / EN language toggle
 - Hash-based routing (Pages-compatible)
@@ -35,7 +38,7 @@ There is no production backend.
 ### Hash routing is intentional
 
 Use `#/`, `#/season/...`, `#/team/...`, `#/team/.../propped-up`,
-`#/match/...`. Do not switch to history
+`#/team/.../var-swing-wins`, `#/player/...`, `#/match/...`. Do not switch to history
 routing unless the deployment target changes.
 
 ### DB is embedded into the static site
@@ -84,7 +87,9 @@ Frontend pages:
 - [frontend/src/Dashboard.res](frontend/src/Dashboard.res)
 - [frontend/src/SeasonView.res](frontend/src/SeasonView.res)
 - [frontend/src/TeamView.res](frontend/src/TeamView.res)
+- [frontend/src/PlayerView.res](frontend/src/PlayerView.res)
 - [frontend/src/ProppedUpView.res](frontend/src/ProppedUpView.res)
+- [frontend/src/VarSwingView.res](frontend/src/VarSwingView.res)
 - [frontend/src/MatchView.res](frontend/src/MatchView.res)
 
 Helpers:
@@ -92,6 +97,7 @@ Helpers:
 - [frontend/src/Database.res](frontend/src/Database.res)
 - [frontend/src/SqlHelper.js](frontend/src/SqlHelper.js)
 - [frontend/src/TeamQueries.res](frontend/src/TeamQueries.res)
+- [frontend/src/PlayerQueries.res](frontend/src/PlayerQueries.res)
 - [frontend/src/FixtureCard.res](frontend/src/FixtureCard.res)
 - [frontend/src/MatchTimeline.res](frontend/src/MatchTimeline.res)
 - [frontend/src/Browser.res](frontend/src/Browser.res) / [BrowserApi.js](frontend/src/BrowserApi.js)
@@ -203,6 +209,13 @@ Frontend timelines and team-derived metrics depend on these columns.
 - `python update_site.py` infers the active season and refreshes only that season by default
 - Use `python update_site.py --season 2025` when you want to pin a specific season
 - Transfermarkt syncing is optional now and mainly useful for comparison or fallback work
+
+### Event-derived player surfaces
+
+- Team squad tables and player archive views are derived from timeline events in `data/site.db`
+- Quiet full-match appearances can be missing because there is no lineup/appearance feed in the canonical schema yet
+- `VAR denied goals` are supported in player-facing views
+- `VAR denied assists` are intentionally not exposed because the current SofaScore incident feed does not provide an assister on overturned-goal events
 
 ### Build warnings
 

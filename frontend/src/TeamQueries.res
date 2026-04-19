@@ -152,6 +152,46 @@ let teamTopAssistersSql =
   "AND ((e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?)) " ++
   "GROUP BY e.player_2 ORDER BY assists DESC, e.player_2 ASC LIMIT 8"
 
+let teamSquadBySeasonSql =
+  "WITH player_event_rows AS (" ++
+  "SELECT m.id AS match_id, m.season AS season, e.player_1 AS player, " ++
+  "CASE WHEN e.event_type IN ('Goal', 'Penalty Goal') THEN 1 ELSE 0 END AS goals, " ++
+  "0 AS assists, " ++
+  "CASE WHEN e.event_type = 'Yellow Card' THEN 1 ELSE 0 END AS yellow_cards, " ++
+  "CASE WHEN e.event_type IN ('Red Card', 'Second Yellow Card') THEN 1 ELSE 0 END AS red_cards, " ++
+  "CASE " ++
+  "WHEN e.event_type = 'VAR Decision' AND e.event_subtype = 'goalAwarded' AND e.event_detail = 'overturned' THEN 1 " ++
+  "ELSE 0 END AS var_denied_goals " ++
+  "FROM events e JOIN matches m ON m.id = e.match_id " ++
+  "WHERE COALESCE(e.player_1, '') != '' " ++
+  "AND ((e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?)) " ++
+  "UNION ALL " ++
+  "SELECT m.id AS match_id, m.season AS season, e.player_2 AS player, " ++
+  "0 AS goals, " ++
+  "CASE WHEN e.event_type IN ('Goal', 'Penalty Goal') AND COALESCE(e.player_1, '') != COALESCE(e.player_2, '') THEN 1 ELSE 0 END AS assists, " ++
+  "0 AS yellow_cards, " ++
+  "0 AS red_cards, " ++
+  "0 AS var_denied_goals " ++
+  "FROM events e JOIN matches m ON m.id = e.match_id " ++
+  "WHERE COALESCE(e.player_2, '') != '' " ++
+  "AND (" ++
+  "(e.event_type = 'Substitution' AND ((e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?))) " ++
+  "OR " ++
+  "(e.event_type IN ('Goal', 'Penalty Goal') AND COALESCE(e.player_1, '') != COALESCE(e.player_2, '') " ++
+  "AND ((e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?)))" ++
+  ")" ++
+  ") " ++
+  "SELECT player, COUNT(DISTINCT match_id) AS appearances, " ++
+  "COALESCE(SUM(goals), 0) AS goals, " ++
+  "COALESCE(SUM(assists), 0) AS assists, " ++
+  "COALESCE(SUM(yellow_cards), 0) AS yellow_cards, " ++
+  "COALESCE(SUM(red_cards), 0) AS red_cards, " ++
+  "COALESCE(SUM(var_denied_goals), 0) AS var_denied_goals " ++
+  "FROM player_event_rows " ++
+  "WHERE season = ? " ++
+  "GROUP BY player " ++
+  "ORDER BY appearances DESC, goals DESC, assists DESC, player ASC"
+
 let teamMatchesBySeasonSql =
   "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
   "FROM matches " ++

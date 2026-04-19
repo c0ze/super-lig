@@ -13,8 +13,10 @@ The project has two halves:
 
 - Season overview cards across the available archive
 - Latest-season standings and top scorers
-- Team archive pages with aggregate records, recent form, and season tabs
+- Team archive pages with aggregate records, recent form, season tabs, top assisters, and event-derived squad tables
 - Team-specific `kollandığı maçlar` / `propped up games` drill-down pages
+- Team-specific `VAR swing wins` drill-down pages
+- Player archive pages with season tabs and contribution match lists
 - Match detail pages with richer event timelines
 - Built-in TR / EN language toggle
 - Static deployment with no backend runtime
@@ -102,7 +104,7 @@ Columns:
 - `minute_base`
 - `minute_extra`
 - `team` (`"Home"` or `"Away"`)
-- `event_type` (`Goal`, `Penalty Goal`, `Missed Penalty`, `Yellow Card`, `Second Yellow Card`, `Red Card`, `Substitution`)
+- `event_type` (`Goal`, `Own Goal`, `Penalty Goal`, `Missed Penalty`, `Yellow Card`, `Second Yellow Card`, `Red Card`, `Substitution`, `VAR Decision`, ...)
 - `event_order`
 - `event_subtype`
 - `event_detail`
@@ -113,7 +115,7 @@ Columns:
 - `home_score_after`
 - `away_score_after`
 
-`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. The richer event fields make it possible to render stoppage-time labels, missed penalties, own goals, VAR decisions, second-yellow reds, and team-level derived views like `kollandığı maçlar`. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
+`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. The richer event fields make it possible to render stoppage-time labels, missed penalties, own goals, VAR decisions, second-yellow reds, player archive views, and team-level derived views like `kollandığı maçlar` and `VAR swing wins`. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
 
 ## Prerequisites
 
@@ -410,7 +412,7 @@ The frontend is intentionally backend-free in production.
 ### How it works
 
 1. `frontend/scripts/sync-public-assets.mjs` copies:
-   - `data/super_lig.db`
+   - `data/site.db`
    - `sql-wasm.wasm`
 2. Vite serves those files from `frontend/public/`
 3. `src/SqlHelper.js` loads the SQLite database into the browser with `sql.js`
@@ -422,10 +424,13 @@ The frontend is intentionally backend-free in production.
 - `Route.res`: hash-based routing
 - `Dashboard.res`: home page and season archive overview
 - `SeasonView.res`: season table, top scorers, fixture list
-- `TeamView.res`: team archive, latest-season match history, and season tabs
+- `TeamView.res`: team archive, assist leaders, squad tables, and season tabs
+- `PlayerView.res`: player archive and season-grouped contribution matches
 - `ProppedUpView.res`: team-specific `kollandığı maçlar` drill-down
+- `VarSwingView.res`: team-specific VAR swing wins drill-down
 - `MatchView.res`: single match timeline page
 - `TeamQueries.res`: shared SQL used by team pages
+- `PlayerQueries.res`: shared SQL used by player pages
 - `Copy.res`: TR / EN labels and UI copy
 - `Database.res`: ReScript bindings to `SqlHelper.js`
 - `SqlHelper.js`: browser SQLite loader/query helper
@@ -438,6 +443,8 @@ The app uses hash-based routing for GitHub Pages compatibility:
 - `#/season/<year>`
 - `#/team/<name>`
 - `#/team/<name>/propped-up`
+- `#/team/<name>/var-swing-wins`
+- `#/player/<name>`
 - `#/match/<id>`
 
 Hash routing is intentional because GitHub Pages does not provide SPA rewrite rules for arbitrary nested paths.
@@ -450,6 +457,7 @@ The frontend currently has lightweight Node-based tests for:
 - locale parsing and toggling
 - timeline copy helpers
 - team SQL queries for season tabs and `kollandığı maçlar`
+- player SQL queries for archive rollups
 - `SqlHelper.js` import behavior
 
 Run them with:
@@ -496,7 +504,7 @@ The workflow uses `actions/configure-pages`, `actions/upload-pages-artifact`, an
 3. Builds the Vite app
 4. Copies the root [CNAME](CNAME) file into `frontend/dist/`
 
-That means deployment should not rely on manually copying `data/super_lig.db`.
+That means deployment should not rely on manually copying `data/site.db`.
 
 ## Known Quirks and Caveats
 
@@ -507,6 +515,8 @@ That means deployment should not rely on manually copying `data/super_lig.db`.
 - The scraper is source-structure-sensitive and can break if Transfermarkt changes HTML classes or timeline markup.
 - Transfermarkt sometimes renames clubs across seasons, so a team's history in `TeamView` can fragment across name variants.
 - Team history is intentionally season-scoped in the UI now; the latest season is selected by default and older seasons live behind tabs.
+- Team squad tables are event-derived, so quiet full-match appearances can still be missing without lineup-level data.
+- `VAR denied assists` are intentionally not shown because the current SofaScore incident feed does not expose an assister for overturned-goal VAR incidents.
 
 ## Recommended Workflow
 

@@ -64,7 +64,9 @@ const makeDb = () => {
       ('m0', 20, '20', 20, 0, 'Away', 'Red Card', 1, '', 'Last man foul', 'Defender', '', 0, 0, 0, 0),
       ('m1', 15, '15', 15, 0, 'Home', 'Goal', 1, '', '', 'Dzeko', 'Tadic', 0, 0, 1, 0),
       ('m1', 70, '70', 70, 0, 'Home', 'VAR Decision', 2, 'penaltyNotAwarded', 'overturned', 'Fenerbahce Forward', '', 1, 1, 1, 1),
+      ('m1', 80, '80', 80, 0, 'Home', 'Substitution', 3, 'regular', '', 'Cengiz Under', 'Dzeko', 1, 0, 1, 0),
       ('m1', 75, '75', 75, 0, 'Away', 'Second Yellow Card', 1, '', 'Faul', 'Defender', '', 0, 0, 0, 0),
+      ('m2', 25, '25', 25, 0, 'Away', 'Yellow Card', 0, '', 'Tactical foul', 'Fred', '', 0, 0, 0, 0),
       ('m2', 60, '60', 60, 0, 'Home', 'VAR Decision', 2, 'cardUpgrade', 'confirmed', 'Besiktas Defender', '', 0, 0, 0, 0),
       ('m2', 32, '32', 32, 0, 'Away', 'Goal', 1, '', '', 'Szymanski', 'Tadic', 0, 0, 0, 1),
       ('m2', 90, '90', 90, 0, 'Away', 'Missed Penalty', 1, 'Faul penaltısı', 'Kurtarış', 'Talisca', 'Keeper', 0, 0, 0, 0),
@@ -218,4 +220,101 @@ test("var swing wins only count favorable var decisions that turn into one-goal 
       has_red_card_swing: 0,
     },
   ]);
+});
+
+test("team squad rows aggregate appearances and player stats from same-team event participation", () => {
+  const db = makeDb();
+  const statement = db.prepare(TeamQueries.teamSquadBySeasonSql);
+  statement.bind([
+    "Fenerbahce",
+    "Fenerbahce",
+    "Fenerbahce",
+    "Fenerbahce",
+    "Fenerbahce",
+    "Fenerbahce",
+    "2025",
+  ]);
+  const squad = [];
+  while (statement.step()) {
+    squad.push(statement.getAsObject());
+  }
+  statement.free();
+
+  assert.deepEqual(
+    squad,
+    [
+      {
+        player: "Talisca",
+        appearances: 2,
+        goals: 1,
+        assists: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Tadic",
+        appearances: 2,
+        goals: 0,
+        assists: 2,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Dzeko",
+        appearances: 1,
+        goals: 1,
+        assists: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Szymanski",
+        appearances: 1,
+        goals: 1,
+        assists: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Cengiz Under",
+        appearances: 1,
+        goals: 0,
+        assists: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Fenerbahce Forward",
+        appearances: 1,
+        goals: 0,
+        assists: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Fred",
+        appearances: 1,
+        goals: 0,
+        assists: 0,
+        yellow_cards: 1,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+      {
+        player: "Home Forward",
+        appearances: 1,
+        goals: 0,
+        assists: 0,
+        yellow_cards: 0,
+        red_cards: 0,
+        var_denied_goals: 0,
+      },
+    ],
+  );
 });

@@ -5,7 +5,6 @@ type playerSummary = {
   goals: int,
   assists: int,
   var_denied_goals: int,
-  var_denied_assists: int,
 }
 
 type seasonRow = {
@@ -25,7 +24,6 @@ type matchRow = {
   goals: int,
   assists: int,
   var_denied_goals: int,
-  var_denied_assists: int,
 }
 
 type state = {
@@ -40,7 +38,7 @@ let emptyState = {
   matches: [],
 }
 
-let playerParams = player => [player, player, player, player, player, player, player, player]
+let playerParams = player => [player, player, player, player, player, player]
 
 let didPlayerTeamWin = match =>
   (match.team_name == match.home_team && match.home_score > match.away_score) ||
@@ -82,7 +80,7 @@ let make = (~player: string, ~language: Locale.t, ~navigate: Route.t => unit) =>
       } else {
         Database.runQuery(
           PlayerQueries.playerMatchesBySeasonSql,
-          [player, player, player, player, player, player, player, player, selectedSeason],
+          [player, player, player, player, player, player, selectedSeason],
         )
       }
 
@@ -149,10 +147,6 @@ let make = (~player: string, ~language: Locale.t, ~navigate: Route.t => unit) =>
             <strong>{React.int(summary.var_denied_goals)}</strong>
           </article>
           <article className="metric-card">
-            <span className="metric-label">{React.string(Copy.varDeniedAssistsLabel(language))}</span>
-            <strong>{React.int(summary.var_denied_assists)}</strong>
-          </article>
-          <article className="metric-card">
             <span className="metric-label">{React.string(Copy.seasonsLabel(language))}</span>
             <strong>{React.int(summary.seasons)}</strong>
           </article>
@@ -183,10 +177,6 @@ let make = (~player: string, ~language: Locale.t, ~navigate: Route.t => unit) =>
               <div className="record-row">
                 <span>{React.string(Copy.varDeniedGoalsLabel(language))}</span>
                 <strong>{React.int(summary.var_denied_goals)}</strong>
-              </div>
-              <div className="record-row">
-                <span>{React.string(Copy.varDeniedAssistsLabel(language))}</span>
-                <strong>{React.int(summary.var_denied_assists)}</strong>
               </div>
               <div className="record-row">
                 <span>{React.string(Copy.clubsLabel(language))}</span>
@@ -264,11 +254,6 @@ let make = (~player: string, ~language: Locale.t, ~navigate: Route.t => unit) =>
                       {match.var_denied_goals > 0
                         ? <span className="event-badge warning">
                             {React.string(Copy.varDeniedGoalCountText(language, match.var_denied_goals))}
-                          </span>
-                        : React.null}
-                      {match.var_denied_assists > 0
-                        ? <span className="event-badge warning">
-                            {React.string(Copy.varDeniedAssistCountText(language, match.var_denied_assists))}
                           </span>
                         : React.null}
                     </div>
