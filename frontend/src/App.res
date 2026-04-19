@@ -67,6 +67,11 @@ let make = () => {
       | Some(team) => <TeamView team language navigate />
       | None => <Dashboard language latestSeason navigate />
       }
+    | #player =>
+      switch route.param {
+      | Some(player) => <PlayerView player language navigate />
+      | None => <Dashboard language latestSeason navigate />
+      }
     | #match =>
       switch route.param {
       | Some(matchId) => <MatchView matchId language navigate />

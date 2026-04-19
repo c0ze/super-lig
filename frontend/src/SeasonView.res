@@ -213,7 +213,11 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
               <div className="ranking-meta">
                 <span className="ranking-index">{React.string("#" ++ Int.toString(index + 1))}</span>
                 <div>
-                  <strong>{React.string(row.player)}</strong>
+                  <strong>
+                    <button className="player-link-button" onClick={_ => navigate(Route.player(row.player))}>
+                      {React.string(row.player)}
+                    </button>
+                  </strong>
                   <span>{React.string(row.team_name)}</span>
                 </div>
               </div>

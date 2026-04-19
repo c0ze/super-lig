@@ -238,6 +238,30 @@ let clubTopScorersTitle = language =>
   | #en => "Club scoring leaders"
   }
 
+let clubTopAssistersTitle = language =>
+  switch language {
+  | #tr => "Kulüp tarihinin asistçileri"
+  | #en => "Club assist leaders"
+  }
+
+let playerArchiveTitle = (language, player) =>
+  switch language {
+  | #tr => player ++ " arşivi"
+  | #en => player ++ " archive"
+  }
+
+let playerSubtitle = language =>
+  switch language {
+  | #tr => "Gol, asist ve VAR ile iptal edilen skor katkıları sezonlara göre listelenir."
+  | #en => "Goals, assists, and VAR-denied scoring contributions grouped by season."
+  }
+
+let playerMatchHistoryTitle = language =>
+  switch language {
+  | #tr => "Katkı yaptığı maçlar"
+  | #en => "Contribution matches"
+  }
+
 let matchHistoryTitle = language =>
   switch language {
   | #tr => "Maç geçmişi"
@@ -302,6 +326,36 @@ let penaltiesLabel = language =>
   switch language {
   | #tr => "Penaltı"
   | #en => "Penalties"
+  }
+
+let assistsLabel = language =>
+  switch language {
+  | #tr => "Asist"
+  | #en => "Assists"
+  }
+
+let clubsLabel = language =>
+  switch language {
+  | #tr => "Kulüp"
+  | #en => "Clubs"
+  }
+
+let goalInvolvementsLabel = language =>
+  switch language {
+  | #tr => "Skor katkısı"
+  | #en => "Goal involvements"
+  }
+
+let varDeniedGoalsLabel = language =>
+  switch language {
+  | #tr => "VAR iptal golleri"
+  | #en => "VAR denied goals"
+  }
+
+let varDeniedAssistsLabel = language =>
+  switch language {
+  | #tr => "VAR iptal asistleri"
+  | #en => "VAR denied assists"
   }
 
 let proppedUpGamesLabel = language =>
@@ -464,6 +518,30 @@ let playerLabel = language =>
   switch language {
   | #tr => "Oyuncu"
   | #en => "Player"
+  }
+
+let goalCountText = (language, count) =>
+  switch language {
+  | #tr => Int.toString(count) ++ " gol"
+  | #en => Int.toString(count) ++ (count == 1 ? " goal" : " goals")
+  }
+
+let assistCountText = (language, count) =>
+  switch language {
+  | #tr => Int.toString(count) ++ " asist"
+  | #en => Int.toString(count) ++ (count == 1 ? " assist" : " assists")
+  }
+
+let varDeniedGoalCountText = (language, count) =>
+  switch language {
+  | #tr => Int.toString(count) ++ " VAR iptal gol"
+  | #en => Int.toString(count) ++ (count == 1 ? " VAR denied goal" : " VAR denied goals")
+  }
+
+let varDeniedAssistCountText = (language, count) =>
+  switch language {
+  | #tr => Int.toString(count) ++ " VAR iptal asist"
+  | #en => Int.toString(count) ++ (count == 1 ? " VAR denied assist" : " VAR denied assists")
   }
 
 let positionLabel = language =>

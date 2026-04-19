@@ -251,12 +251,16 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
             <h2>{React.string(Copy.topScorersTitle(language))}</h2>
           </div>
           <div className="ranking-list">
-            {React.array(state.topScorers->Array.mapWithIndex((row, index) => {
+          {React.array(state.topScorers->Array.mapWithIndex((row, index) => {
               <div key={row.player ++ row.team_name} className="ranking-row">
                 <div className="ranking-meta">
                   <span className="ranking-index">{React.string("#" ++ Int.toString(index + 1))}</span>
                   <div>
-                    <strong>{React.string(row.player)}</strong>
+                    <strong>
+                      <button className="player-link-button" onClick={_ => navigate(Route.player(row.player))}>
+                        {React.string(row.player)}
+                      </button>
+                    </strong>
                     <span>{React.string(row.team_name)}</span>
                   </div>
                 </div>

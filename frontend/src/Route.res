@@ -1,4 +1,4 @@
-type kind = [#dashboard | #season | #team | #match | #proppedUp | #notFound]
+type kind = [#dashboard | #season | #team | #player | #match | #proppedUp | #notFound]
 
 type t = {
   kind: kind,
@@ -8,6 +8,7 @@ type t = {
 let dashboard = {kind: #dashboard, param: None}
 let season = param => {kind: #season, param: Some(param)}
 let team = param => {kind: #team, param: Some(param)}
+let player = param => {kind: #player, param: Some(param)}
 let match = param => {kind: #match, param: Some(param)}
 let proppedUp = param => {kind: #proppedUp, param: Some(param)}
 let notFound = param => {kind: #notFound, param: Some(param)}
@@ -64,6 +65,7 @@ let parseHash = hash => {
     switch first {
     | "season" => season(second->decodeURIComponent)
     | "team" => team(second->decodeURIComponent)
+    | "player" => player(second->decodeURIComponent)
     | "match" => match(second->decodeURIComponent)
     | _ => notFound(cleaned)
     }
@@ -90,6 +92,11 @@ let toHash = route =>
   | #team =>
     switch route.param {
     | Some(name) => "#/team/" ++ name->encodeURIComponent
+    | None => "#/"
+    }
+  | #player =>
+    switch route.param {
+    | Some(name) => "#/player/" ++ name->encodeURIComponent
     | None => "#/"
     }
   | #match =>

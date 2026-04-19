@@ -580,7 +580,8 @@ button {
 }
 
 .table-team-button,
-.team-link {
+.team-link,
+.player-link-button {
   padding: 0;
   color: inherit;
   background: transparent;
@@ -594,7 +595,8 @@ button {
 }
 
 .table-team-button:hover,
-.team-link:hover {
+.team-link:hover,
+.player-link-button:hover {
   color: var(--accent);
 }
 
@@ -871,6 +873,18 @@ button {
   display: grid;
   gap: 0.65rem;
   padding: 1rem 1.1rem;
+}
+
+.player-match-card {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.player-impact-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0 0.2rem 0.1rem;
 }
 
 .match-card-scoreline {

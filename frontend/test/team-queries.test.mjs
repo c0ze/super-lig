@@ -59,8 +59,11 @@ const makeDb = () => {
       event_subtype, event_detail, player_1, player_2,
       home_score_before, away_score_before, home_score_after, away_score_after
     ) VALUES
+      ('m0', 10, '10', 10, 0, 'Home', 'Goal', 1, '', '', 'Valencia', 'Irfan Can', 0, 0, 1, 0),
       ('m0', 20, '20', 20, 0, 'Away', 'Red Card', 1, '', 'Last man foul', 'Defender', '', 0, 0, 0, 0),
+      ('m1', 15, '15', 15, 0, 'Home', 'Goal', 1, '', '', 'Dzeko', 'Tadic', 0, 0, 1, 0),
       ('m1', 75, '75', 75, 0, 'Away', 'Second Yellow Card', 1, '', 'Faul', 'Defender', '', 0, 0, 0, 0),
+      ('m2', 32, '32', 32, 0, 'Away', 'Goal', 1, '', '', 'Szymanski', 'Tadic', 0, 0, 0, 1),
       ('m2', 90, '90', 90, 0, 'Away', 'Missed Penalty', 1, 'Faul penaltısı', 'Kurtarış', 'Talisca', 'Keeper', 0, 0, 0, 0),
       ('m3', 55, '55', 55, 0, 'Home', 'Penalty Goal', 1, 'Penaltı', '', 'Talisca', 'Talisca', 2, 1, 3, 1);
   `);
@@ -149,4 +152,20 @@ test("team archive seasons and season-scoped match lists are queryable", () => {
       {id: "m1", season: "2025", matchday: 1},
     ],
   );
+});
+
+test("team top assisters count assisted goals without treating penalties as assists", () => {
+  const db = makeDb();
+  const statement = db.prepare(TeamQueries.teamTopAssistersSql);
+  statement.bind(["Fenerbahce", "Fenerbahce"]);
+  const assisters = [];
+  while (statement.step()) {
+    assisters.push(statement.getAsObject());
+  }
+  statement.free();
+
+  assert.deepEqual(assisters, [
+    {player: "Tadic", assists: 2},
+    {player: "Irfan Can", assists: 1},
+  ]);
 });

@@ -66,6 +66,15 @@ let teamMatchSeasonsSql =
   "GROUP BY season " ++
   "ORDER BY season DESC"
 
+let teamTopAssistersSql =
+  "SELECT e.player_2 AS player, COUNT(*) AS assists " ++
+  "FROM events e JOIN matches m ON m.id = e.match_id " ++
+  "WHERE e.event_type IN ('Goal', 'Penalty Goal') " ++
+  "AND e.player_2 IS NOT NULL AND e.player_2 != '' " ++
+  "AND COALESCE(e.player_1, '') != COALESCE(e.player_2, '') " ++
+  "AND ((e.team = 'Home' AND m.home_team = ?) OR (e.team = 'Away' AND m.away_team = ?)) " ++
+  "GROUP BY e.player_2 ORDER BY assists DESC, e.player_2 ASC LIMIT 8"
+
 let teamMatchesBySeasonSql =
   "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
   "FROM matches " ++

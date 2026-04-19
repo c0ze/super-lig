@@ -32,6 +32,11 @@ type scorerRow = {
   goals: int,
 }
 
+type assisterRow = {
+  player: string,
+  assists: int,
+}
+
 type matchRow = {
   id: string,
   season: string,
@@ -45,6 +50,7 @@ type matchRow = {
 type state = {
   summary: option<teamSummary>,
   scorers: array<scorerRow>,
+  assisters: array<assisterRow>,
   seasons: array<seasonRow>,
   matches: array<matchRow>,
 }
@@ -52,6 +58,7 @@ type state = {
 let emptyState = {
   summary: None,
   scorers: [],
+  assisters: [],
   seasons: [],
   matches: [],
 }
@@ -99,6 +106,10 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       "GROUP BY e.player_1 ORDER BY goals DESC, e.player_1 ASC LIMIT 8",
       [team, team],
     )
+    let assisters: array<assisterRow> = Database.runQuery(
+      TeamQueries.teamTopAssistersSql,
+      [team, team],
+    )
     let seasons: array<seasonRow> = Database.runQuery(
       TeamQueries.teamMatchSeasonsSql,
       [team, team],
@@ -136,6 +147,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
     setState(_ => {
       summary,
       scorers,
+      assisters,
       seasons,
       matches: [],
     })
@@ -300,11 +312,39 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
               <div className="ranking-meta">
                 <span className="ranking-index">{React.string("#" ++ Int.toString(index + 1))}</span>
                 <div>
-                  <strong>{React.string(row.player)}</strong>
+                  <strong>
+                    <button className="player-link-button" onClick={_ => navigate(Route.player(row.player))}>
+                      {React.string(row.player)}
+                    </button>
+                  </strong>
                   <span>{React.string(team)}</span>
                 </div>
               </div>
               <span className="ranking-value">{React.int(row.goals)}</span>
+            </div>
+          }))}
+        </div>
+      </article>
+
+      <article className="section-card">
+        <div className="section-heading">
+          <h2>{React.string(Copy.clubTopAssistersTitle(language))}</h2>
+        </div>
+        <div className="ranking-list">
+          {React.array(state.assisters->Array.mapWithIndex((row, index) => {
+            <div key={row.player} className="ranking-row">
+              <div className="ranking-meta">
+                <span className="ranking-index">{React.string("#" ++ Int.toString(index + 1))}</span>
+                <div>
+                  <strong>
+                    <button className="player-link-button" onClick={_ => navigate(Route.player(row.player))}>
+                      {React.string(row.player)}
+                    </button>
+                  </strong>
+                  <span>{React.string(team)}</span>
+                </div>
+              </div>
+              <span className="ranking-value">{React.int(row.assists)}</span>
             </div>
           }))}
         </div>
