@@ -64,6 +64,7 @@ The project has two halves:
 ├── sofascore_scraper.py        # SofaScore scraper
 ├── site_db.py                  # Canonical frontend DB schema
 ├── site_builder.py             # Source adapter builder (SofaScore / Transfermarkt)
+├── update_site.py              # One-command SofaScore refresh + canonical rebuild
 ├── AGENTS.md                   # Agent handoff notes for automated contributors
 └── CLAUDE.md                   # Claude/Codex project instructions
 ```
@@ -163,6 +164,12 @@ Build the canonical frontend DB from SofaScore:
 python site_builder.py --source sofascore
 ```
 
+Or use the one-command updater for the current active season:
+
+```bash
+python update_site.py
+```
+
 ### 4. Install frontend dependencies
 
 ```bash
@@ -228,6 +235,18 @@ Build the canonical frontend DB:
 
 ```bash
 python site_builder.py --source sofascore
+```
+
+Run the one-command latest-data flow:
+
+```bash
+python update_site.py
+```
+
+Also build the frontend in the same step:
+
+```bash
+python update_site.py --frontend-build
 ```
 
 Switch the canonical DB back to Transfermarkt if needed:
@@ -309,10 +328,20 @@ The normal flow is:
 For the current SofaScore-first setup, that usually means:
 
 ```bash
-python sofascore_scraper.py --start 2025 --end 2025 --refresh
-python site_builder.py --source sofascore
-cd frontend
-npm run build
+python update_site.py --frontend-build
+```
+
+That command:
+
+1. Infers the active Super Lig season
+2. Refreshes that season in `data/sofascore_super_lig.db`
+3. Rebuilds `data/site.db` from SofaScore
+4. Optionally builds the frontend when `--frontend-build` is set
+
+If you want to pin a specific season instead of inferring it:
+
+```bash
+python update_site.py --season 2025
 ```
 
 The frontend asset sync script behaves like this:
@@ -370,6 +399,7 @@ Important notes:
 - `python sofascore_scraper.py --start <year> --end <year>` is intentionally independent from the Transfermarkt scraper and does not touch `data/super_lig.db`
 - The SofaScore DB preserves each source payload as `raw_json` for later comparison or cross-mapping work
 - `python site_builder.py --source <source>` is the only step that changes the frontend-facing DB
+- `python update_site.py` is the recommended high-level entrypoint for routine SofaScore refreshes
 - Frontend builds default to `SITE_DB_SOURCE=sofascore`
 - If the selected raw source DB is missing, frontend builds reuse the committed `data/site.db`
 
@@ -492,9 +522,7 @@ For data refreshes:
 
 ```bash
 source venv/bin/activate
-python scraper.py --start 2010 --end 2025 --refresh
-cd frontend
-npm run build
+python update_site.py --frontend-build
 ```
 
 ## Next Improvements

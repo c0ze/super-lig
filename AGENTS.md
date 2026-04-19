@@ -67,6 +67,7 @@ Data layer:
 - [sofascore_scraper.py](sofascore_scraper.py) — SofaScore discovery, parsing, persistence
 - [site_db.py](site_db.py) — canonical frontend DB schema
 - [site_builder.py](site_builder.py) — source adapter builder
+- [update_site.py](update_site.py) — one-command SofaScore refresh + canonical rebuild
 - [data/super_lig.db](data/super_lig.db)
 - [data/sofascore_super_lig.db](data/sofascore_super_lig.db)
 - [data/site.db](data/site.db)
@@ -112,6 +113,7 @@ python scraper.py --start 2010 --end 2025
 python scraper.py --start 2010 --end 2025 --refresh
 python sofascore_scraper.py --start 2010 --end 2026
 python site_builder.py --source sofascore
+python update_site.py
 ```
 
 Frontend (from [frontend/](frontend/)):
@@ -197,9 +199,9 @@ Frontend timelines and team-derived metrics depend on these columns.
 - The live site currently pivots off SofaScore, not Transfermarkt
 - To pull the latest games, refresh `data/sofascore_super_lig.db` and then rebuild `data/site.db`
 - Recommended update flow:
-  - `python sofascore_scraper.py --start 2025 --end 2025 --refresh`
-  - `python site_builder.py --source sofascore`
-  - `cd frontend && npm run build`
+  - `python update_site.py --frontend-build`
+- `python update_site.py` infers the active season and refreshes only that season by default
+- Use `python update_site.py --season 2025` when you want to pin a specific season
 - Transfermarkt syncing is optional now and mainly useful for comparison or fallback work
 
 ### Build warnings
