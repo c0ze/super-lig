@@ -60,11 +60,15 @@ const makeDb = () => {
       home_score_before, away_score_before, home_score_after, away_score_after
     ) VALUES
       ('m0', 10, '10', 10, 0, 'Home', 'Goal', 1, '', '', 'Valencia', 'Irfan Can', 0, 0, 1, 0),
+      ('m0', 5, '5', 5, 0, 'Away', 'VAR Decision', 0, 'goalAwarded', 'overturned', 'Opponent Striker', '', 0, 0, 0, 0),
       ('m0', 20, '20', 20, 0, 'Away', 'Red Card', 1, '', 'Last man foul', 'Defender', '', 0, 0, 0, 0),
       ('m1', 15, '15', 15, 0, 'Home', 'Goal', 1, '', '', 'Dzeko', 'Tadic', 0, 0, 1, 0),
+      ('m1', 70, '70', 70, 0, 'Home', 'VAR Decision', 2, 'penaltyNotAwarded', 'overturned', 'Fenerbahce Forward', '', 1, 1, 1, 1),
       ('m1', 75, '75', 75, 0, 'Away', 'Second Yellow Card', 1, '', 'Faul', 'Defender', '', 0, 0, 0, 0),
+      ('m2', 60, '60', 60, 0, 'Home', 'VAR Decision', 2, 'cardUpgrade', 'confirmed', 'Besiktas Defender', '', 0, 0, 0, 0),
       ('m2', 32, '32', 32, 0, 'Away', 'Goal', 1, '', '', 'Szymanski', 'Tadic', 0, 0, 0, 1),
       ('m2', 90, '90', 90, 0, 'Away', 'Missed Penalty', 1, 'Faul penaltısı', 'Kurtarış', 'Talisca', 'Keeper', 0, 0, 0, 0),
+      ('m3', 20, '20', 20, 0, 'Home', 'VAR Decision', 0, 'penaltyNotAwarded', 'overturned', 'Home Forward', '', 0, 0, 0, 0),
       ('m3', 55, '55', 55, 0, 'Home', 'Penalty Goal', 1, 'Penaltı', '', 'Talisca', 'Talisca', 2, 1, 3, 1);
   `);
 
@@ -167,5 +171,51 @@ test("team top assisters count assisted goals without treating penalties as assi
   assert.deepEqual(assisters, [
     {player: "Tadic", assists: 2},
     {player: "Irfan Can", assists: 1},
+  ]);
+});
+
+test("var swing wins only count favorable var decisions that turn into one-goal wins", () => {
+  const db = makeDb();
+
+  const countStatement = db.prepare(TeamQueries.varSwingWinsSql);
+  countStatement.bind(["Fenerbahce"]);
+  assert.equal(countStatement.step(), true);
+  assert.deepEqual(countStatement.getAsObject(), {var_swing_wins: 2});
+  countStatement.free();
+
+  const seasonStatement = db.prepare(TeamQueries.varSwingWinSeasonsSql);
+  seasonStatement.bind(["Fenerbahce"]);
+  const seasons = [];
+  while (seasonStatement.step()) {
+    seasons.push(seasonStatement.getAsObject());
+  }
+  seasonStatement.free();
+
+  assert.deepEqual(seasons, [
+    {season: "2025", games: 1},
+    {season: "2024", games: 1},
+  ]);
+
+  const matchStatement = db.prepare(TeamQueries.varSwingWinMatchesBySeasonSql);
+  matchStatement.bind(["Fenerbahce", "2025"]);
+  const matches = [];
+  while (matchStatement.step()) {
+    matches.push(matchStatement.getAsObject());
+  }
+  matchStatement.free();
+
+  assert.deepEqual(matches, [
+    {
+      id: "m1",
+      season: "2025",
+      matchday: 1,
+      home_team: "Fenerbahce",
+      away_team: "Rizespor",
+      home_score: 2,
+      away_score: 1,
+      has_goal_swing: 0,
+      has_penalty_swing: 1,
+      has_red_card_swing: 0,
+    },
   ]);
 });

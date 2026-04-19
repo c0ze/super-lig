@@ -82,6 +82,11 @@ let make = () => {
       | Some(team) => <ProppedUpView team language navigate />
       | None => <Dashboard language latestSeason navigate />
       }
+    | #varSwingWins =>
+      switch route.param {
+      | Some(team) => <VarSwingView team language navigate />
+      | None => <Dashboard language latestSeason navigate />
+      }
     | #notFound =>
       <section className="page-hero compact">
         <div className="eyebrow">{React.string(Copy.notFoundTitle(language))}</div>

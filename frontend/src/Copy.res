@@ -358,6 +358,66 @@ let varDeniedAssistsLabel = language =>
   | #en => "VAR denied assists"
   }
 
+let varSwingWinsLabel = language =>
+  switch language {
+  | #tr => "VAR swing galibiyetleri"
+  | #en => "VAR swing wins"
+  }
+
+let varSwingWinsDescription = language =>
+  switch language {
+  | #tr => "Skor eşitken veya gerideyken takım lehine gelen VAR kararının ardından tek farkla kazanılan maçlar."
+  | #en => "Matches won by one goal after a favorable VAR decision while the team was level or behind."
+  }
+
+let varSwingWinsPageTitle = (language, team) =>
+  switch language {
+  | #tr => team ++ " VAR swing galibiyetleri"
+  | #en => team ++ " VAR swing wins"
+  }
+
+let varSwingWinsPageSubtitle = language =>
+  switch language {
+  | #tr => "Sezonlara göre ayrılan liste, skor eşitken veya gerideyken takım lehine çıkan VAR kararları sonrası gelen tek farklık galibiyetleri gösterir."
+  | #en => "A season-by-season list of one-goal wins after favorable VAR decisions while the team was level or behind."
+  }
+
+let noVarSwingWinsTitle = language =>
+  switch language {
+  | #tr => "VAR swing galibiyeti bulunamadı"
+  | #en => "No VAR swing wins found"
+  }
+
+let noVarSwingWinsSubtitle = language =>
+  switch language {
+  | #tr => "Bu takım için seçilen kurala uyan VAR etkili tek farklık galibiyet bulunamadı."
+  | #en => "No one-goal wins with a qualifying favorable VAR swing were found for this team."
+  }
+
+let varSwingGoalReason = language =>
+  switch language {
+  | #tr => "Gol kararı"
+  | #en => "Goal swing"
+  }
+
+let varSwingPenaltyReason = language =>
+  switch language {
+  | #tr => "Penaltı kararı"
+  | #en => "Penalty swing"
+  }
+
+let varSwingRedCardReason = language =>
+  switch language {
+  | #tr => "Kart kararı"
+  | #en => "Card swing"
+  }
+
+let varSwingCombinedReason = language =>
+  switch language {
+  | #tr => "Birden fazla VAR etkisi"
+  | #en => "Multiple VAR swings"
+  }
+
 let proppedUpGamesLabel = language =>
   switch language {
   | #tr => "Kollandığı maçlar"

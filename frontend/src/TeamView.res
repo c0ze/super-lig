@@ -10,6 +10,7 @@ type teamSummary = {
   red_cards: int,
   penalties: int,
   propped_up_games: int,
+  var_swing_wins: int,
 }
 
 type teamEventSummary = {
@@ -20,6 +21,10 @@ type teamEventSummary = {
 
 type proppedUpRow = {
   propped_up_games: int,
+}
+
+type varSwingRow = {
+  var_swing_wins: int,
 }
 
 type seasonRow = {
@@ -98,6 +103,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       [team, team],
     )
     let proppedUpRows: array<proppedUpRow> = Database.runQuery(TeamQueries.proppedUpGamesSql, [team])
+    let varSwingRows: array<varSwingRow> = Database.runQuery(TeamQueries.varSwingWinsSql, [team])
     let scorers: array<scorerRow> = Database.runQuery(
       "SELECT e.player_1 AS player, COUNT(*) AS goals " ++
       "FROM events e JOIN matches m ON m.id = e.match_id " ++
@@ -126,6 +132,8 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
             : {yellow_cards: 0, red_cards: 0, penalties: 0}
         let proppedUpGames =
           Js.Array2.length(proppedUpRows) > 0 ? Js.Array2.unsafe_get(proppedUpRows, 0).propped_up_games : 0
+        let varSwingWins =
+          Js.Array2.length(varSwingRows) > 0 ? Js.Array2.unsafe_get(varSwingRows, 0).var_swing_wins : 0
 
         Some({
           matches: base.matches,
@@ -139,6 +147,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           red_cards: eventSummary.red_cards,
           penalties: eventSummary.penalties,
           propped_up_games: proppedUpGames,
+          var_swing_wins: varSwingWins,
         })
       } else {
         None
@@ -245,6 +254,13 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
           <span className="metric-label">{React.string(Copy.proppedUpGamesLabel(language))}</span>
           <strong>{React.int(summary.propped_up_games)}</strong>
         </button>
+        <button
+          className="metric-card metric-card-button"
+          onClick={_ => navigate(Route.varSwingWins(team))}
+          title={Copy.varSwingWinsDescription(language)}>
+          <span className="metric-label">{React.string(Copy.varSwingWinsLabel(language))}</span>
+          <strong>{React.int(summary.var_swing_wins)}</strong>
+        </button>
       </section>
     | None => React.null
     }}
@@ -296,6 +312,10 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
             <div className="record-row" title={Copy.proppedUpGamesDescription(language)}>
               <span>{React.string(Copy.proppedUpGamesLabel(language))}</span>
               <strong>{React.int(summary.propped_up_games)}</strong>
+            </div>
+            <div className="record-row" title={Copy.varSwingWinsDescription(language)}>
+              <span>{React.string(Copy.varSwingWinsLabel(language))}</span>
+              <strong>{React.int(summary.var_swing_wins)}</strong>
             </div>
           </div>
         | None => <p>{React.string(Copy.noData(language))}</p>

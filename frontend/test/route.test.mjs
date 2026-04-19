@@ -45,6 +45,13 @@ test("propped up hash resolves to the team drill-down route", () => {
   assert.equal(route.param, "Fenerbahce SK");
 });
 
+test("var swing wins hash resolves to the team drill-down route", () => {
+  const route = Route.parseHash("#/team/Fenerbahce%20SK/var-swing-wins");
+
+  assert.equal(route.kind, "varSwingWins");
+  assert.equal(route.param, "Fenerbahce SK");
+});
+
 test("route hashes encode team names safely", () => {
   const hash = Route.toHash(Route.team("Göztepe"));
 
@@ -61,6 +68,12 @@ test("route hashes encode propped up team routes safely", () => {
   const hash = Route.toHash(Route.proppedUp("Göztepe"));
 
   assert.equal(hash, "#/team/G%C3%B6ztepe/propped-up");
+});
+
+test("route hashes encode var swing wins team routes safely", () => {
+  const hash = Route.toHash(Route.varSwingWins("Göztepe"));
+
+  assert.equal(hash, "#/team/G%C3%B6ztepe/var-swing-wins");
 });
 
 test("route hashes encode player routes safely", () => {
