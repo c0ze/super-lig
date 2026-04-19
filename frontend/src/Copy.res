@@ -252,8 +252,8 @@ let matchTimelineTitle = language =>
 
 let matchSubtitle = language =>
   switch language {
-  | #tr => "Goller, kartlar ve oyuncu değişiklikleri tek akışta."
-  | #en => "Goals, cards, and substitutions in one chronological feed."
+  | #tr => "Goller, kartlar, oyuncu değişiklikleri ve VAR kararları tek akışta."
+  | #en => "Goals, cards, substitutions, and VAR decisions in one chronological feed."
   }
 
 let matchDetailsTitle = language =>
@@ -270,8 +270,8 @@ let matchQuickLinksTitle = language =>
 
 let viewOnTransfermarkt = language =>
   switch language {
-  | #tr => "Transfermarkt'ta aç"
-  | #en => "View on Transfermarkt"
+  | #tr => "Kaynak sayfayı aç"
+  | #en => "Open source page"
   }
 
 let timelineEventCountLabel = language =>
@@ -540,15 +540,19 @@ let seasonMatchesPlayed = (language, count) =>
 
 let eventType = (language, label) =>
   switch (language, label) {
+  | (#en, "Own Goal") => "Own goal"
   | (#en, "Second Yellow Card") => "Red second yellow"
   | (#en, "Penalty Goal") => "Penalty goal"
   | (#en, "Missed Penalty") => "Missed penalty"
+  | (#en, "VAR Decision") => "VAR decision"
   | (#tr, "Substitution") => "Oyuncu değişikliği"
   | (#tr, "Yellow Card") => "Sarı kart"
   | (#tr, "Goal") => "Gol"
+  | (#tr, "Own Goal") => "Kendi kalesine gol"
   | (#tr, "Second Yellow Card") => "İkinci sarıdan kırmızı"
   | (#tr, "Red Card") => "Kırmızı kart"
   | (#tr, "Penalty Goal") => "Penaltı golü"
   | (#tr, "Missed Penalty") => "Kaçan penaltı"
+  | (#tr, "VAR Decision") => "VAR kararı"
   | _ => label
   }

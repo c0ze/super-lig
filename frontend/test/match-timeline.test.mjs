@@ -57,3 +57,25 @@ test("missed penalties keep the penalty context in the timeline", () => {
     "Missed penalty • Goalkeeper: Mateusz Lis",
   );
 });
+
+test("own goals count as goal events in the timeline", () => {
+  assert.equal(MatchTimeline.isGoalEvent("Own Goal"), true);
+  assert.equal(MatchTimeline.toneClass("Own Goal"), "goal");
+});
+
+test("var decisions use a dedicated timeline label and localized subtype details", () => {
+  const english = Locale.fromString("en");
+
+  assert.equal(MatchTimeline.eventLabel(english, "VAR Decision", "", ""), "VAR decision");
+  assert.equal(
+    MatchTimeline.detailTextWithMetadata(
+      english,
+      "VAR Decision",
+      "goalAwarded",
+      "overturned",
+      "Leroy Sane",
+      "",
+    ),
+    "Goal awarded • Overturned",
+  );
+});

@@ -5,7 +5,9 @@ A data-driven frontend for Turkish Super Lig matches, backed by an embedded SQLi
 The project has two halves:
 
 - A Python scraper that collects match reports and event timelines from Transfermarkt into `data/super_lig.db`
-- A ReScript + React + Vite frontend that ships the database directly to the browser and queries it with `sql.js`
+- An independent Python scraper that collects Super Lig match and incident data from SofaScore into `data/sofascore_super_lig.db`
+- A canonical adapter build that turns either source DB into `data/site.db`
+- A ReScript + React + Vite frontend that ships the canonical database directly to the browser and queries it with `sql.js`
 
 ## Features
 
@@ -20,7 +22,9 @@ The project has two halves:
 ## Tech Stack
 
 - **Scraper**: Python, `requests`, `beautifulsoup4`, `lxml`, SQLite
-- **Database**: SQLite (`data/super_lig.db`)
+- **Transfermarkt DB**: SQLite (`data/super_lig.db`)
+- **SofaScore DB**: SQLite (`data/sofascore_super_lig.db`)
+- **Canonical Site DB**: SQLite (`data/site.db`)
 - **Frontend**: ReScript, React 18, Vite 5
 - **In-browser SQL**: `sql.js`
 - **Hosting**: GitHub Pages
@@ -31,7 +35,9 @@ The project has two halves:
 ```text
 .
 ├── data/
-│   └── super_lig.db            # Embedded SQLite database used by the frontend
+│   ├── super_lig.db            # Raw Transfermarkt archive
+│   ├── sofascore_super_lig.db  # Raw SofaScore archive
+│   └── site.db                 # Canonical frontend DB built from one source adapter
 ├── frontend/
 │   ├── public/                 # Copied DB + sql-wasm.wasm before builds
 │   ├── scripts/
@@ -54,13 +60,17 @@ The project has two halves:
 ├── .github/workflows/deploy.yml
 ├── db.py                       # SQLite schema bootstrap
 ├── scraper.py                  # Transfermarkt scraper
+├── sofascore_db.py             # SofaScore-only SQLite schema bootstrap
+├── sofascore_scraper.py        # SofaScore scraper
+├── site_db.py                  # Canonical frontend DB schema
+├── site_builder.py             # Source adapter builder (SofaScore / Transfermarkt)
 ├── AGENTS.md                   # Agent handoff notes for automated contributors
 └── CLAUDE.md                   # Claude/Codex project instructions
 ```
 
 ## Data Model
 
-The SQLite database currently contains two main tables:
+The canonical frontend database (`data/site.db`) contains two main tables:
 
 ### `matches`
 
@@ -102,7 +112,7 @@ Columns:
 - `home_score_after`
 - `away_score_after`
 
-`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. The richer event fields make it possible to render stoppage-time labels, missed penalties, second-yellow reds, and team-level derived views like `kollandığı maçlar`. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
+`team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. The richer event fields make it possible to render stoppage-time labels, missed penalties, own goals, VAR decisions, second-yellow reds, and team-level derived views like `kollandığı maçlar`. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
 
 ## Prerequisites
 
@@ -133,13 +143,25 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Initialize the database schema
+### 3. Initialize the raw source schemas
 
 ```bash
 python db.py
 ```
 
 This creates `data/super_lig.db` if it does not already exist.
+
+Initialize the SofaScore raw schema:
+
+```bash
+python sofascore_db.py
+```
+
+Build the canonical frontend DB from SofaScore:
+
+```bash
+python site_builder.py --source sofascore
+```
 
 ### 4. Install frontend dependencies
 
@@ -160,10 +182,16 @@ Then open the Vite URL shown in the terminal.
 
 ### Root / Python
 
-Initialize the schema:
+Initialize the raw Transfermarkt schema:
 
 ```bash
 python db.py
+```
+
+Initialize the raw SofaScore schema:
+
+```bash
+python sofascore_db.py
 ```
 
 Run the scraper for a year range (defaults: 2010–2025):
@@ -176,6 +204,45 @@ Force a re-scrape of already-seen matches:
 
 ```bash
 python scraper.py --start 2010 --end 2025 --refresh
+```
+
+Run the independent SofaScore scraper into `data/sofascore_super_lig.db`:
+
+```bash
+python sofascore_scraper.py --start 2024 --end 2026
+```
+
+Force a SofaScore refresh:
+
+```bash
+python sofascore_scraper.py --start 2024 --end 2026 --refresh
+```
+
+Run a small SofaScore smoke test:
+
+```bash
+python sofascore_scraper.py --start 2025 --end 2025 --limit-matches 3
+```
+
+Build the canonical frontend DB:
+
+```bash
+python site_builder.py --source sofascore
+```
+
+Switch the canonical DB back to Transfermarkt if needed:
+
+```bash
+python site_builder.py --source transfermarkt
+```
+
+Update the live site data after new matches land:
+
+```bash
+python sofascore_scraper.py --start 2025 --end 2025 --refresh
+python site_builder.py --source sofascore
+cd frontend
+npm run build
 ```
 
 ### Frontend
@@ -223,9 +290,42 @@ Run the full deployment verification path:
 npm run verify:deploy
 ```
 
+Choose a different canonical source for a local frontend build:
+
+```bash
+SITE_DB_SOURCE=transfermarkt npm run build
+```
+
+## Sync Flow
+
+The frontend never reads the raw source DBs directly.
+
+The normal flow is:
+
+1. Update the raw source DB you care about
+2. Rebuild `data/site.db` from that source
+3. Let the frontend copy `data/site.db` into `frontend/public/super_lig.db`
+
+For the current SofaScore-first setup, that usually means:
+
+```bash
+python sofascore_scraper.py --start 2025 --end 2025 --refresh
+python site_builder.py --source sofascore
+cd frontend
+npm run build
+```
+
+The frontend asset sync script behaves like this:
+
+1. If the selected raw source DB exists, it rebuilds `data/site.db`
+2. If the raw source DB is missing but `data/site.db` already exists, it reuses the committed canonical DB
+3. If neither is available, the build fails
+
+This fallback is intentional so GitHub Pages builds can succeed from a clean checkout without requiring the raw SofaScore archive to be re-scraped during CI.
+
 ## Scraper Workflow
 
-The scraper pipeline is:
+The Transfermarkt scraper pipeline is:
 
 1. Discover match report URLs per season and matchday
 2. Fetch each report page from Transfermarkt
@@ -243,6 +343,23 @@ The scraper pipeline is:
    - live score snapshots before / after each event
 6. Save the fixture and its events into SQLite
 
+The independent SofaScore scraper works similarly, but keeps its output in a separate DB so it can be compared against Transfermarkt without affecting the frontend:
+
+1. Discover available Super Lig seasons from SofaScore
+2. Page through each season's fixture list
+3. Normalize match metadata into `matches`
+4. Fetch each match's incident feed
+5. Normalize incidents, including VAR-style decisions, into `incidents`
+6. Save the match bundle into `data/sofascore_super_lig.db`
+
+The canonical site builder then adapts one source DB into the stable frontend contract:
+
+1. Read either `data/sofascore_super_lig.db` or `data/super_lig.db`
+2. Normalize source-specific rows into canonical `matches` / `events`
+3. Preserve existing frontend SQL expectations
+4. Write the result to `data/site.db`
+5. Copy `data/site.db` into `frontend/public/super_lig.db` during frontend builds
+
 Important notes:
 
 - CLI entrypoint: `python scraper.py --start <year> --end <year>` (inclusive range, defaults 2010–2025)
@@ -250,6 +367,11 @@ Important notes:
 - `get_scraped_match_ids()` skips fixtures already scraped with a valid score
 - Re-scraping a match deletes and re-inserts its events, so timelines cannot duplicate
 - Unplayed placeholder fixtures are removed from the DB at scraper startup and are never persisted
+- `python sofascore_scraper.py --start <year> --end <year>` is intentionally independent from the Transfermarkt scraper and does not touch `data/super_lig.db`
+- The SofaScore DB preserves each source payload as `raw_json` for later comparison or cross-mapping work
+- `python site_builder.py --source <source>` is the only step that changes the frontend-facing DB
+- Frontend builds default to `SITE_DB_SOURCE=sofascore`
+- If the selected raw source DB is missing, frontend builds reuse the committed `data/site.db`
 
 ## Frontend Architecture
 

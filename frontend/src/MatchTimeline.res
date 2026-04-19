@@ -5,12 +5,43 @@ let minuteLabelWithFallback = (minuteLabelRaw, minute) =>
 
 let primaryText = (eventType, player1) => player1 != "" ? player1 : eventType
 
+let varSubtypeLabel = (language: Locale.t, subtype) =>
+  switch (language, subtype) {
+  | (#tr, "cardUpgrade") => "Kart yükseltildi"
+  | (#tr, "goalAwarded") => "Gol kararı"
+  | (#tr, "goalNotAwarded") => "Gol verilmedi"
+  | (#tr, "penaltyAwarded") => "Penaltı kararı"
+  | (#tr, "penaltyNotAwarded") => "Penaltı verilmedi"
+  | (#tr, "redCardGiven") => "Kırmızı kart kararı"
+  | (#tr, "review") => "İnceleme"
+  | (#en, "cardUpgrade") => "Card upgrade"
+  | (#en, "goalAwarded") => "Goal awarded"
+  | (#en, "goalNotAwarded") => "Goal not awarded"
+  | (#en, "penaltyAwarded") => "Penalty awarded"
+  | (#en, "penaltyNotAwarded") => "Penalty not awarded"
+  | (#en, "redCardGiven") => "Red card given"
+  | (#en, "review") => "Review"
+  | _ => subtype
+  }
+
+let varStatusLabel = (language: Locale.t, detail) =>
+  switch (language, detail) {
+  | (#tr, "confirmed") => "Onaylandı"
+  | (#tr, "overturned") => "Geçersiz sayıldı"
+  | (#tr, "rescinded") => "Geri alındı"
+  | (#en, "confirmed") => "Confirmed"
+  | (#en, "overturned") => "Overturned"
+  | (#en, "rescinded") => "Rescinded"
+  | _ => detail
+  }
+
 let isPenaltyGoal = (eventType, player1, player2) =>
   eventType == "Penalty Goal" || (eventType == "Goal" && player1 != "" && player1 == player2)
 
 let isGoalEvent = eventType =>
   switch eventType {
   | "Goal"
+  | "Own Goal"
   | "Penalty Goal" => true
   | _ => false
   }
@@ -61,6 +92,19 @@ let detailTextWithMetadata = (language: Locale.t, eventType, eventSubtype, event
         }
       let pieces = [eventSubtype, keeperDetail, eventDetail]->Js.Array2.filter(text => text != "")
       pieces->Js.Array2.length == 0 ? base : base ++ " • " ++ pieces->Js.Array2.joinWith(" • ")
+    | "Own Goal" =>
+      switch language {
+      | #tr => "Kendi kalesine gol"
+      | #en => "Own goal"
+      }
+    | "VAR Decision" =>
+      let pieces =
+        [
+          varSubtypeLabel(language, eventSubtype),
+          varStatusLabel(language, eventDetail),
+        ]
+        ->Js.Array2.filter(text => text != "")
+      pieces->Js.Array2.joinWith(" • ")
     | "Yellow Card"
     | "Second Yellow Card"
     | "Red Card" =>
@@ -75,8 +119,10 @@ let detailText = (language: Locale.t, eventType, player1, player2) =>
 let toneClass = eventType =>
   switch eventType {
   | "Goal" => "goal"
+  | "Own Goal" => "goal"
   | "Penalty Goal" => "goal"
   | "Yellow Card" => "warning"
+  | "VAR Decision" => "warning"
   | "Second Yellow Card"
   | "Red Card" => "danger"
   | "Substitution" => "neutral"

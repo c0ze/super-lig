@@ -4,8 +4,11 @@ Handoff notes for automated contributors.
 
 ## Project summary
 
-- Python scraper builds [data/super_lig.db](data/super_lig.db)
-- ReScript frontend in [frontend/](frontend/) reads that DB directly in the browser via `sql.js`
+- Python scrapers build raw source DBs:
+  - [data/super_lig.db](data/super_lig.db) from Transfermarkt
+  - [data/sofascore_super_lig.db](data/sofascore_super_lig.db) from SofaScore
+- [site_builder.py](site_builder.py) adapts one source into the canonical frontend DB at [data/site.db](data/site.db)
+- ReScript frontend in [frontend/](frontend/) reads the canonical DB directly in the browser via `sql.js`
 - GitHub Pages workflow in [.github/workflows/deploy.yml](.github/workflows/deploy.yml) deploys to `super-lig.arda.tr`
 - The root [CNAME](CNAME) file is the source of truth for the custom domain
 - GitHub Pages is deployed via the official Pages artifact actions, not via a `gh-pages` branch
@@ -39,7 +42,8 @@ routing unless the deployment target changes.
 
 Frontend builds depend on:
 
-- [data/super_lig.db](data/super_lig.db)
+- [data/site.db](data/site.db)
+- [site_builder.py](site_builder.py)
 - [frontend/scripts/sync-public-assets.mjs](frontend/scripts/sync-public-assets.mjs)
 - `frontend/public/super_lig.db` (copied on build)
 - `frontend/public/sql-wasm.wasm` (copied on build)
@@ -59,7 +63,13 @@ Data layer:
 
 - [db.py](db.py) — schema + indexes + FK pragma
 - [scraper.py](scraper.py) — discovery, parsing, persistence
+- [sofascore_db.py](sofascore_db.py) — raw SofaScore schema
+- [sofascore_scraper.py](sofascore_scraper.py) — SofaScore discovery, parsing, persistence
+- [site_db.py](site_db.py) — canonical frontend DB schema
+- [site_builder.py](site_builder.py) — source adapter builder
 - [data/super_lig.db](data/super_lig.db)
+- [data/sofascore_super_lig.db](data/sofascore_super_lig.db)
+- [data/site.db](data/site.db)
 
 Frontend shell:
 
@@ -97,8 +107,11 @@ Python:
 ```bash
 source venv/bin/activate
 python db.py
+python sofascore_db.py
 python scraper.py --start 2010 --end 2025
 python scraper.py --start 2010 --end 2025 --refresh
+python sofascore_scraper.py --start 2010 --end 2026
+python site_builder.py --source sofascore
 ```
 
 Frontend (from [frontend/](frontend/)):
@@ -126,7 +139,8 @@ Covers ReScript compile, Node tests, asset sync, production Vite build.
 
 ### Match dates
 
-`matches.date` is raw display text, not ISO.
+In raw Transfermarkt data, `matches.date` is raw display text, not ISO.
+In canonical `site.db`, adapter-built rows may use UTC timestamps rendered as text.
 
 ### Team values in events
 
@@ -167,6 +181,26 @@ rows at startup. Do not reintroduce unplayed matches into `matches`.
   `home_score_after`, `away_score_after`
 
 Frontend timelines and team-derived metrics depend on these columns.
+
+### Canonical DB source switching
+
+- The frontend should consume the canonical `data/site.db`, not the raw source DBs
+- `site_builder.py` currently supports `--source sofascore` and `--source transfermarkt`
+- `frontend/scripts/sync-public-assets.mjs` builds `data/site.db` automatically before copying it into `frontend/public/super_lig.db`
+- If the selected raw source DB exists, the sync script rebuilds `data/site.db`
+- If the raw source DB is missing but `data/site.db` already exists, the sync script reuses the committed canonical DB
+- If neither the raw source DB nor `data/site.db` exists, the frontend build fails
+- The default frontend build source is SofaScore unless `SITE_DB_SOURCE` is overridden
+
+### Latest-data policy
+
+- The live site currently pivots off SofaScore, not Transfermarkt
+- To pull the latest games, refresh `data/sofascore_super_lig.db` and then rebuild `data/site.db`
+- Recommended update flow:
+  - `python sofascore_scraper.py --start 2025 --end 2025 --refresh`
+  - `python site_builder.py --source sofascore`
+  - `cd frontend && npm run build`
+- Transfermarkt syncing is optional now and mainly useful for comparison or fallback work
 
 ### Build warnings
 
