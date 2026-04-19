@@ -2,6 +2,9 @@ venv/
 __pycache__/
 *.pyc
 .env
+.cache/
+data/*.bak
+data/sofascore_super_lig.db
 frontend/node_modules/
 frontend/dist/
 frontend/lib/

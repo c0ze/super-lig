@@ -92,7 +92,6 @@ SAMPLE_UNPLAYED_MATCH_HTML = """
 </div>
 """
 
-
 class InitDbTests(unittest.TestCase):
     def test_init_db_adds_rich_event_columns(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -229,7 +228,6 @@ class ParseMatchEventsTests(unittest.TestCase):
         self.assertEqual(missed_penalty["away_score_before"], 0)
         self.assertEqual(missed_penalty["home_score_after"], 2)
         self.assertEqual(missed_penalty["away_score_after"], 0)
-
 
 class ParseMatchReportTests(unittest.TestCase):
     def test_parse_match_report_skips_unplayed_matches(self) -> None:
