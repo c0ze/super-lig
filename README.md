@@ -186,6 +186,7 @@ npm run dev
 ```
 
 Then open the Vite URL shown in the terminal.
+`npm run dev` syncs `data/site.db` into `frontend/public/site.db` before Vite starts.
 
 ## Common Commands
 
@@ -325,7 +326,7 @@ The normal flow is:
 
 1. Update the raw source DB you care about
 2. Rebuild `data/site.db` from that source
-3. Let the frontend copy `data/site.db` into `frontend/public/super_lig.db`
+3. Let the frontend copy `data/site.db` into `frontend/public/site.db`
 
 For the current SofaScore-first setup, that usually means:
 
@@ -389,7 +390,7 @@ The canonical site builder then adapts one source DB into the stable frontend co
 2. Normalize source-specific rows into canonical `matches` / `events`
 3. Preserve existing frontend SQL expectations
 4. Write the result to `data/site.db`
-5. Copy `data/site.db` into `frontend/public/super_lig.db` during frontend builds
+5. Copy `data/site.db` into `frontend/public/site.db` before frontend dev/build runs
 
 Important notes:
 
@@ -480,29 +481,39 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 ### Trigger
 
 - push to `main`
-- manual workflow dispatch
+- every Tuesday at 06:00 UTC
+- manual workflow dispatch, optionally pinned to a season start year
 
 ### Pipeline
 
 1. Checkout repository
 2. Configure GitHub Pages
 3. Set up Node 20
-4. Install `frontend/` dependencies
-5. Run `npm run verify:deploy`
-6. Upload `frontend/dist` as the GitHub Pages artifact
-7. Deploy that artifact with the official GitHub Pages actions
+4. Set up Python 3.12
+5. Install Python dependencies and run `pytest`
+6. On scheduled runs, refresh the active SofaScore season with `python update_site.py`
+7. On manual runs with database refresh enabled, refresh SofaScore data, optionally for the requested season
+8. Install `frontend/` dependencies
+9. Run `npm run verify:deploy`
+10. Upload `frontend/dist` as the GitHub Pages artifact
+11. Deploy that artifact with the official GitHub Pages actions
+
+Push deploys use the committed `data/site.db`. Scheduled and opted-in manual
+deploys rebuild `data/site.db` in the workflow first, so the deployed artifact
+contains the refreshed database even though CI does not commit it back to the repo.
 
 The workflow uses `actions/configure-pages`, `actions/upload-pages-artifact`, and
 `actions/deploy-pages`. It does not publish via a `gh-pages` branch.
 
 ### Production build behavior
 
-`npm run build` automatically:
+`npm run dev` and `npm run build` automatically copy the DB and WASM into `frontend/public/`.
 
-1. Copies the DB and WASM into `frontend/public/`
-2. Compiles ReScript
-3. Builds the Vite app
-4. Copies the root [CNAME](CNAME) file into `frontend/dist/`
+`npm run build` also:
+
+1. Compiles ReScript
+2. Builds the Vite app
+3. Copies the root [CNAME](CNAME) file into `frontend/dist/`
 
 That means deployment should not rely on manually copying `data/site.db`.
 

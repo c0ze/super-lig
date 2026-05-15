@@ -8,7 +8,7 @@ type latestSeasonRow = {
 let make = () => {
   let (dbState, setDbState) = React.useState(() => #loading)
   let (route, setRoute) = React.useState(() => Browser.readHash()->Route.parseHash)
-  let (latestSeason, setLatestSeason) = React.useState(() => "2024")
+  let (latestSeason, setLatestSeason) = React.useState(() => "")
   let (language, setLanguage) = React.useState(() => Browser.readStoredLanguage()->Locale.fromString)
 
   React.useEffect0(() => {
@@ -100,10 +100,11 @@ let make = () => {
       </section>
     }
 
+  let hasLatestSeason = latestSeason != ""
   let latestSeasonRoute = Route.season(latestSeason)
   let isHomeActive = route.kind == #dashboard
   let isLatestSeasonActive =
-    route.kind == #season && route.param == Some(latestSeason)
+    hasLatestSeason && route.kind == #season && route.param == Some(latestSeason)
 
   <div className="app-shell">
     <div className="app-backdrop app-backdrop-left" />
@@ -125,11 +126,13 @@ let make = () => {
           onClick={_ => navigate(Route.dashboard)}>
           {React.string(Copy.navHome(language))}
         </button>
-        <button
-          className={isLatestSeasonActive ? "nav-chip active" : "nav-chip"}
-          onClick={_ => navigate(latestSeasonRoute)}>
-          {React.string(Copy.navLatestSeason(language, latestSeason))}
-        </button>
+        {hasLatestSeason
+          ? <button
+              className={isLatestSeasonActive ? "nav-chip active" : "nav-chip"}
+              onClick={_ => navigate(latestSeasonRoute)}>
+              {React.string(Copy.navLatestSeason(language, latestSeason))}
+            </button>
+          : React.null}
         <div className="language-switcher">
           {React.array([#tr, #en]->Array.map(locale => {
             let isActive = locale == language

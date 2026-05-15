@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run prepare:assets && vite",
     "prepare:assets": "node ./scripts/sync-public-assets.mjs",
     "finalize:build": "node ./scripts/sync-dist-assets.mjs",
     "build": "npm run prepare:assets && rescript build -with-deps && vite build && npm run finalize:build",
@@ -15,6 +15,8 @@
     "verify:deploy": "npm run test && npm run build"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/inter": "^5.2.8",
     "@rescript/core": "^1.6.0",
     "@rescript/react": "^0.13.0",
     "react": "^18.3.1",

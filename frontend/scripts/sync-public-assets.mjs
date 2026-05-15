@@ -23,6 +23,8 @@ const fileExists = async (path) => {
   }
 };
 
+let rebuilt = false;
+
 if (await fileExists(sourceDb)) {
   const buildResult = spawnSync(
     "python",
@@ -42,6 +44,7 @@ if (await fileExists(sourceDb)) {
   if (buildResult.status !== 0) {
     throw new Error(`Failed to build canonical site.db from source '${source}'`);
   }
+  rebuilt = true;
 } else if (await fileExists(canonicalDb)) {
   console.warn(
     `Source DB for '${source}' not found at ${sourceDb}. Reusing existing canonical site.db.`,
@@ -55,7 +58,7 @@ if (await fileExists(sourceDb)) {
 const assets = [
   {
     from: canonicalDb,
-    to: resolve(publicDir, "super_lig.db"),
+    to: resolve(publicDir, "site.db"),
   },
   {
     from: resolve(frontendRoot, "node_modules", "sql.js", "dist", "sql-wasm.wasm"),
@@ -69,4 +72,8 @@ for (const asset of assets) {
   await copyFile(asset.from, asset.to);
 }
 
-console.log(`Built site.db from ${source} and synced it with sql.js WASM into frontend/public`);
+console.log(
+  rebuilt
+    ? `Built site.db from ${source} and synced it with sql.js WASM into frontend/public`
+    : "Reused existing site.db and synced it with sql.js WASM into frontend/public",
+);

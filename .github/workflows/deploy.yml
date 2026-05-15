@@ -4,7 +4,20 @@ on:
   push:
     branches:
       - main
+  schedule:
+    # GitHub schedules are UTC; this runs every Tuesday at 06:00 UTC.
+    - cron: '0 6 * * 2'
   workflow_dispatch:
+    inputs:
+      refresh_database:
+        description: 'Refresh SofaScore data before deploying'
+        required: true
+        type: boolean
+        default: true
+      season:
+        description: 'Optional season start year to refresh, for example 2025'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -37,7 +50,28 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run Python Tests
+        run: pytest
+
+      - name: Refresh SofaScore Database
+        if: github.event_name == 'schedule'
+        run: python update_site.py
+
+      - name: Refresh SofaScore Database
+        if: github.event_name == 'workflow_dispatch' && inputs.refresh_database
+        run: |
+          if [ -n "${{ inputs.season }}" ]; then
+            python update_site.py --season "${{ inputs.season }}"
+          else
+            python update_site.py
+          fi
+
+      - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: npm ci
 
