@@ -73,7 +73,7 @@ The project has two halves:
 
 ## Data Model
 
-The canonical frontend database (`data/site.db`) contains two main tables:
+The canonical frontend database (`data/site.db`) contains three main tables:
 
 ### `matches`
 
@@ -116,6 +116,23 @@ Columns:
 - `away_score_after`
 
 `team` is stored as `"Home"` / `"Away"` and mapped back to club names in frontend SQL queries. The richer event fields make it possible to render stoppage-time labels, missed penalties, own goals, VAR decisions, second-yellow reds, player archive views, and team-level derived views like `kollandığı maçlar` and `VAR swing wins`. Indexes cover `match_id`, `event_type`, `matches.season`, and both team columns.
+
+### `match_videos`
+
+Stores optional external match-summary videos matched to fixtures.
+
+Columns:
+
+- `id`
+- `match_id` (FK → `matches.id`, `ON DELETE CASCADE`)
+- `source`
+- `video_id`
+- `title`
+- `url`
+- `embed_url`
+- `thumbnail_url`
+- `channel_title`
+- `published_text`
 
 ## Prerequisites
 
@@ -186,6 +203,7 @@ npm run dev
 ```
 
 Then open the Vite URL shown in the terminal.
+`npm run dev` syncs `data/site.db` into `frontend/public/site.db` before Vite starts.
 
 ## Common Commands
 
@@ -261,6 +279,7 @@ Update the live site data after new matches land:
 
 ```bash
 python sofascore_scraper.py --start 2025 --end 2025 --refresh
+python youtube_summary_scraper.py
 python site_builder.py --source sofascore
 cd frontend
 npm run build
@@ -325,7 +344,7 @@ The normal flow is:
 
 1. Update the raw source DB you care about
 2. Rebuild `data/site.db` from that source
-3. Let the frontend copy `data/site.db` into `frontend/public/super_lig.db`
+3. Let the frontend copy `data/site.db` into `frontend/public/site.db`
 
 For the current SofaScore-first setup, that usually means:
 
@@ -383,13 +402,22 @@ The independent SofaScore scraper works similarly, but keeps its output in a sep
 5. Normalize incidents, including VAR-style decisions, into `incidents`
 6. Save the match bundle into `data/sofascore_super_lig.db`
 
+The YouTube summary scraper scans the beIN SPORTS Arşiv and beIN SPORTS Türkiye
+channels, parses titles like
+`Trabzonspor (3-4) Beşiktaş | MAÇ ÖZETİ | 27. Hafta - 2016/2017` and
+`Trabzonspor (2-1) Galatasaray - Match Highlights | Trendyol Süper Lig - 2025/26`,
+matches them by season, matchday when present, score, and normalized team names,
+and saves the result in `match_videos`. By default, it enriches
+`data/sofascore_super_lig.db` when that raw DB exists; otherwise it enriches the
+canonical `data/site.db`, which is convenient for local builds from a clean checkout.
+
 The canonical site builder then adapts one source DB into the stable frontend contract:
 
 1. Read either `data/sofascore_super_lig.db` or `data/super_lig.db`
-2. Normalize source-specific rows into canonical `matches` / `events`
+2. Normalize source-specific rows into canonical `matches` / `events` / `match_videos`
 3. Preserve existing frontend SQL expectations
 4. Write the result to `data/site.db`
-5. Copy `data/site.db` into `frontend/public/super_lig.db` during frontend builds
+5. Copy `data/site.db` into `frontend/public/site.db` before frontend dev/build runs
 
 Important notes:
 
@@ -402,6 +430,7 @@ Important notes:
 - The SofaScore DB preserves each source payload as `raw_json` for later comparison or cross-mapping work
 - `python site_builder.py --source <source>` is the only step that changes the frontend-facing DB
 - `python update_site.py` is the recommended high-level entrypoint for routine SofaScore refreshes
+- `python youtube_summary_scraper.py` enriches the SofaScore DB with beIN SPORTS Arşiv and beIN SPORTS Türkiye YouTube summaries
 - Frontend builds default to `SITE_DB_SOURCE=sofascore`
 - If the selected raw source DB is missing, frontend builds reuse the committed `data/site.db`
 
@@ -480,29 +509,40 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 ### Trigger
 
 - push to `main`
-- manual workflow dispatch
+- every Tuesday at 06:00 UTC
+- manual workflow dispatch, optionally pinned to a season start year
 
 ### Pipeline
 
 1. Checkout repository
 2. Configure GitHub Pages
 3. Set up Node 20
-4. Install `frontend/` dependencies
-5. Run `npm run verify:deploy`
-6. Upload `frontend/dist` as the GitHub Pages artifact
-7. Deploy that artifact with the official GitHub Pages actions
+4. Set up Python 3.12
+5. Install Python dependencies and run `pytest`
+6. On scheduled runs, refresh the active SofaScore season with `python update_site.py`
+7. On scheduled runs, enrich matches with `python youtube_summary_scraper.py`
+8. On manual runs with database refresh enabled, refresh SofaScore data, optionally for the requested season, then run the YouTube enrichment
+9. Install `frontend/` dependencies
+10. Run `npm run verify:deploy`
+11. Upload `frontend/dist` as the GitHub Pages artifact
+12. Deploy that artifact with the official GitHub Pages actions
+
+Push deploys use the committed `data/site.db`. Scheduled and opted-in manual
+deploys rebuild `data/site.db` in the workflow first, so the deployed artifact
+contains the refreshed database even though CI does not commit it back to the repo.
 
 The workflow uses `actions/configure-pages`, `actions/upload-pages-artifact`, and
 `actions/deploy-pages`. It does not publish via a `gh-pages` branch.
 
 ### Production build behavior
 
-`npm run build` automatically:
+`npm run dev` and `npm run build` automatically copy the DB and WASM into `frontend/public/`.
 
-1. Copies the DB and WASM into `frontend/public/`
-2. Compiles ReScript
-3. Builds the Vite app
-4. Copies the root [CNAME](CNAME) file into `frontend/dist/`
+`npm run build` also:
+
+1. Compiles ReScript
+2. Builds the Vite app
+3. Copies the root [CNAME](CNAME) file into `frontend/dist/`
 
 That means deployment should not rely on manually copying `data/site.db`.
 

@@ -61,6 +61,20 @@ INCIDENT_COLUMNS = (
     "raw_json",
 )
 
+MATCH_VIDEO_COLUMNS = (
+    "match_id",
+    "source",
+    "video_id",
+    "title",
+    "url",
+    "embed_url",
+    "thumbnail_url",
+    "channel_title",
+    "published_text",
+    "matched_at",
+    "raw_json",
+)
+
 SCHEMA_STATEMENTS = (
     """
     CREATE TABLE IF NOT EXISTS matches (
@@ -122,6 +136,24 @@ SCHEMA_STATEMENTS = (
         FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS match_videos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        source TEXT NOT NULL,
+        video_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        url TEXT NOT NULL,
+        embed_url TEXT NOT NULL,
+        thumbnail_url TEXT,
+        channel_title TEXT,
+        published_text TEXT,
+        matched_at TEXT NOT NULL,
+        raw_json TEXT NOT NULL,
+        UNIQUE(source, video_id),
+        FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
+    )
+    """,
     "CREATE INDEX IF NOT EXISTS idx_matches_season_start_year ON matches (season_start_year)",
     "CREATE INDEX IF NOT EXISTS idx_matches_season_id ON matches (season_id)",
     "CREATE INDEX IF NOT EXISTS idx_matches_home_team_id ON matches (home_team_id)",
@@ -129,6 +161,7 @@ SCHEMA_STATEMENTS = (
     "CREATE INDEX IF NOT EXISTS idx_incidents_match_id ON incidents (match_id)",
     "CREATE INDEX IF NOT EXISTS idx_incidents_type ON incidents (incident_type)",
     "CREATE INDEX IF NOT EXISTS idx_incidents_class ON incidents (incident_class)",
+    "CREATE INDEX IF NOT EXISTS idx_match_videos_match_id ON match_videos (match_id)",
 )
 
 
@@ -182,6 +215,23 @@ def save_match_bundle(
             f"INSERT INTO incidents ({incident_columns_sql}) VALUES ({incident_placeholders})",
             [_ordered_values(row, INCIDENT_COLUMNS) for row in incident_rows],
         )
+
+
+def save_match_video(conn: sqlite3.Connection, video_row: dict) -> None:
+    placeholders = ", ".join("?" for _ in MATCH_VIDEO_COLUMNS)
+    columns_sql = ", ".join(MATCH_VIDEO_COLUMNS)
+    update_sql = ", ".join(
+        f"{column} = excluded.{column}"
+        for column in MATCH_VIDEO_COLUMNS
+        if column not in {"source", "video_id"}
+    )
+    conn.execute(
+        f"""
+        INSERT INTO match_videos ({columns_sql}) VALUES ({placeholders})
+        ON CONFLICT(source, video_id) DO UPDATE SET {update_sql}
+        """,
+        _ordered_values(video_row, MATCH_VIDEO_COLUMNS),
+    )
 
 
 if __name__ == "__main__":

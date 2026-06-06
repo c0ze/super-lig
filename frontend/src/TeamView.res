@@ -50,6 +50,7 @@ type matchRow = {
   away_team: string,
   home_score: int,
   away_score: int,
+  has_video: int,
 }
 
 type squadRow = {
@@ -481,6 +482,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
               awayScore={match.away_score}
               language
               navigate
+              hasVideo={match.has_video}
               resultLabel
               resultClassName={resultClass}
             />

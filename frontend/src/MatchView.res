@@ -23,14 +23,24 @@ type eventRow = {
   player_2: string,
 }
 
+type matchVideo = {
+  video_id: string,
+  title: string,
+  url: string,
+  embed_url: string,
+  channel_title: string,
+}
+
 type state = {
   summary: option<matchSummary>,
   events: array<eventRow>,
+  video: option<matchVideo>,
 }
 
 let emptyState = {
   summary: None,
   events: [],
+  video: None,
 }
 
 let isCardEvent = eventType =>
@@ -60,10 +70,16 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
       "WHERE e.match_id = ? ORDER BY COALESCE(e.minute, 0) ASC, COALESCE(e.event_order, e.id) ASC, e.id ASC",
       [matchId],
     )
+    let videos: array<matchVideo> = Database.runQuery(
+      "SELECT video_id, title, url, embed_url, COALESCE(channel_title, '') AS channel_title " ++
+      "FROM match_videos WHERE match_id = ? ORDER BY id ASC LIMIT 1",
+      [matchId],
+    )
 
     setState(_ => {
       summary: Js.Array2.length(summaries) > 0 ? Some(Js.Array2.unsafe_get(summaries, 0)) : None,
       events,
+      video: Js.Array2.length(videos) > 0 ? Some(Js.Array2.unsafe_get(videos, 0)) : None,
     })
 
     None
@@ -166,6 +182,29 @@ let make = (~matchId: string, ~language: Locale.t, ~navigate: Route.t => unit) =
             <strong>{React.int(substitutions)}</strong>
           </article>
         </section>
+
+        {switch state.video {
+        | Some(video) =>
+          <section className="video-panel">
+            <div className="section-heading">
+              <h2>{React.string(Copy.matchSummaryVideoTitle(language))}</h2>
+              {video.channel_title == ""
+                ? React.null
+                : <p>{React.string(video.channel_title)}</p>}
+            </div>
+            <div className="video-frame">
+              <iframe
+                src={video.embed_url}
+                title={video.title}
+                allowFullScreen=true
+              />
+            </div>
+            <a className="video-link" href={video.url} target="_blank" rel="noreferrer noopener">
+              {React.string(Copy.watchOnYoutube(language))}
+            </a>
+          </section>
+        | None => React.null
+        }}
 
         <section className="dashboard-grid match-page-grid">
           <article className="section-card section-span-2">

@@ -17,7 +17,7 @@ export const initDb = async () => {
       locateFile: (file) => resolveAsset(file),
     });
 
-    const dbFile = await fetch(resolveAsset('super_lig.db'));
+    const dbFile = await fetch(resolveAsset('site.db'));
     const buf = await dbFile.arrayBuffer();
 
     dbInstance = new SQL.Database(new Uint8Array(buf));

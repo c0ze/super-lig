@@ -39,6 +39,7 @@ type matchRow = {
   away_team: string,
   home_score: int,
   away_score: int,
+  has_video: int,
 }
 
 type eventRow = {
@@ -117,7 +118,8 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
       [],
     )
     let recentMatches: array<matchRow> = Database.runQuery(
-      "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
+      "SELECT id, season, matchday, home_team, away_team, home_score, away_score, " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video " ++
       "FROM matches WHERE season = (SELECT MAX(season) FROM matches) " ++
       "ORDER BY matchday DESC, home_team ASC LIMIT 6",
       [],
@@ -152,9 +154,11 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
         <h1>{React.string(Copy.dashboardTitle(language))}</h1>
         <p>{React.string(Copy.dashboardSubtitle(language))}</p>
         <div className="hero-actions">
-          <button className="button-primary" onClick={_ => navigate(Route.season(latestSeason))}>
-            {React.string(Copy.jumpToLatestSeason(language))}
-          </button>
+          {latestSeason == ""
+            ? React.null
+            : <button className="button-primary" onClick={_ => navigate(Route.season(latestSeason))}>
+                {React.string(Copy.jumpToLatestSeason(language))}
+              </button>}
           <button className="button-secondary" onClick={_ => Browser.scrollToId("season-archive")}>
             {React.string(Copy.browseArchive(language))}
           </button>
@@ -332,6 +336,7 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
               awayScore={match.away_score}
               language
               navigate
+              hasVideo={match.has_video}
             />
           }))}
         </div>

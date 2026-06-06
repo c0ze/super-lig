@@ -52,6 +52,7 @@ let proppedUpMatchesBySeasonSql =
   benefitEventsSql ++
   "SELECT " ++
   "match_id AS id, season, matchday, home_team, away_team, home_score, away_score, " ++
+  "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = benefit_events.match_id) THEN 1 ELSE 0 END AS has_video, " ++
   "MAX(has_penalty) AS has_penalty, " ++
   "MAX(has_red_card) AS has_red_card " ++
   "FROM benefit_events " ++
@@ -128,6 +129,7 @@ let varSwingWinMatchesBySeasonSql =
   varBenefitEventsSql ++
   "SELECT " ++
   "match_id AS id, season, matchday, home_team, away_team, home_score, away_score, " ++
+  "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = var_benefit_events.match_id) THEN 1 ELSE 0 END AS has_video, " ++
   "MAX(has_goal_swing) AS has_goal_swing, " ++
   "MAX(has_penalty_swing) AS has_penalty_swing, " ++
   "MAX(has_red_card_swing) AS has_red_card_swing " ++
@@ -193,7 +195,8 @@ let teamSquadBySeasonSql =
   "ORDER BY appearances DESC, goals DESC, assists DESC, player ASC"
 
 let teamMatchesBySeasonSql =
-  "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
+  "SELECT id, season, matchday, home_team, away_team, home_score, away_score, " ++
+  "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video " ++
   "FROM matches " ++
   "WHERE (home_team = ? OR away_team = ?) AND season = ? " ++
   "ORDER BY matchday DESC, id DESC"

@@ -23,9 +23,35 @@ const fileExists = async (path) => {
   }
 };
 
+const runPython = (args) => {
+  let missingPython = null;
+  for (const command of ["python", "python3"]) {
+    const result = spawnSync(command, args, {
+      cwd: repoRoot,
+      stdio: "inherit",
+    });
+    if (result.error?.code === "ENOENT") {
+      missingPython = result.error;
+      continue;
+    }
+    return result;
+  }
+
+  return { status: 127, error: missingPython };
+};
+
+const ensureCanonicalSchema = () => {
+  const schemaResult = runPython(["-c", "import site_db; site_db.init_db()"]);
+
+  if (schemaResult.status !== 0) {
+    throw new Error("Failed to ensure canonical site.db schema");
+  }
+};
+
+let rebuilt = false;
+
 if (await fileExists(sourceDb)) {
-  const buildResult = spawnSync(
-    "python",
+  const buildResult = runPython(
     [
       resolve(repoRoot, "site_builder.py"),
       "--source",
@@ -33,19 +59,17 @@ if (await fileExists(sourceDb)) {
       "--target",
       canonicalDb,
     ],
-    {
-      cwd: repoRoot,
-      stdio: "inherit",
-    },
   );
 
   if (buildResult.status !== 0) {
     throw new Error(`Failed to build canonical site.db from source '${source}'`);
   }
+  rebuilt = true;
 } else if (await fileExists(canonicalDb)) {
   console.warn(
     `Source DB for '${source}' not found at ${sourceDb}. Reusing existing canonical site.db.`,
   );
+  ensureCanonicalSchema();
 } else {
   throw new Error(
     `Neither source DB (${sourceDb}) nor canonical DB (${canonicalDb}) is available.`,
@@ -55,7 +79,7 @@ if (await fileExists(sourceDb)) {
 const assets = [
   {
     from: canonicalDb,
-    to: resolve(publicDir, "super_lig.db"),
+    to: resolve(publicDir, "site.db"),
   },
   {
     from: resolve(frontendRoot, "node_modules", "sql.js", "dist", "sql-wasm.wasm"),
@@ -69,4 +93,8 @@ for (const asset of assets) {
   await copyFile(asset.from, asset.to);
 }
 
-console.log(`Built site.db from ${source} and synced it with sql.js WASM into frontend/public`);
+console.log(
+  rebuilt
+    ? `Built site.db from ${source} and synced it with sql.js WASM into frontend/public`
+    : "Reused existing site.db and synced it with sql.js WASM into frontend/public",
+);

@@ -55,6 +55,14 @@ def should_include_sofascore_match(match_row: sqlite3.Row) -> bool:
     return match_row["status_description"] not in SKIPPED_SOFASCORE_STATUSES
 
 
+def table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table_name,),
+    ).fetchone()
+    return row is not None
+
+
 def transfermarkt_event_type(row: sqlite3.Row) -> str:
     event_type = row["event_type"]
     subtype = (row["event_subtype"] or "").strip().lower()
@@ -368,8 +376,7 @@ def build_from_sofascore(
             continue
         incidents_by_match[incident_row["match_id"]].append(normalized)
 
-    source_conn.close()
-
+    included_match_ids: set[int] = set()
     match_count = 0
     event_count = 0
     for match_row in matches:
@@ -379,10 +386,41 @@ def build_from_sofascore(
             canonical_match["id"],
         )
         site_db.save_match_bundle(target_conn, canonical_match, event_rows)
+        included_match_ids.add(match_row["id"])
         match_count += 1
         event_count += len(event_rows)
 
-    return {"matches": match_count, "events": event_count}
+    video_count = 0
+    if included_match_ids and table_exists(source_conn, "match_videos"):
+        placeholders = ", ".join("?" for _ in included_match_ids)
+        video_rows = [
+            {
+                "match_id": str(row["match_id"]),
+                "source": row["source"],
+                "video_id": row["video_id"],
+                "title": row["title"],
+                "url": row["url"],
+                "embed_url": row["embed_url"],
+                "thumbnail_url": row["thumbnail_url"] or "",
+                "channel_title": row["channel_title"] or "",
+                "published_text": row["published_text"] or "",
+            }
+            for row in source_conn.execute(
+                f"""
+                SELECT match_id, source, video_id, title, url, embed_url, thumbnail_url,
+                       channel_title, published_text
+                FROM match_videos
+                WHERE match_id IN ({placeholders})
+                ORDER BY match_id ASC, id ASC
+                """,
+                sorted(included_match_ids),
+            ).fetchall()
+        ]
+        site_db.save_match_videos(target_conn, video_rows)
+        video_count = len(video_rows)
+
+    source_conn.close()
+    return {"matches": match_count, "events": event_count, "videos": video_count}
 
 
 def build_site_db(
@@ -423,6 +461,11 @@ def build_site_db(
         stats["matches"],
         stats["events"],
     )
+    if stats["matches"] == 0:
+        raise RuntimeError(
+            f"Refusing to build an empty canonical DB from {normalized_source}. "
+            "Restore or populate the source DB before rebuilding data/site.db."
+        )
     return stats
 
 

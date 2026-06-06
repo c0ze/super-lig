@@ -188,6 +188,12 @@ let openTimeline = language =>
   | #en => "Open timeline"
   }
 
+let videoCueLabel = language =>
+  switch language {
+  | #tr => "Özet"
+  | #en => "Video"
+  }
+
 let backHome = language =>
   switch language {
   | #tr => "Ana sayfaya dön"
@@ -302,6 +308,18 @@ let matchQuickLinksTitle = language =>
   switch language {
   | #tr => "Hızlı geçişler"
   | #en => "Quick links"
+  }
+
+let matchSummaryVideoTitle = language =>
+  switch language {
+  | #tr => "Maç özeti"
+  | #en => "Match highlights"
+  }
+
+let watchOnYoutube = language =>
+  switch language {
+  | #tr => "YouTube'da aç"
+  | #en => "Open on YouTube"
   }
 
 let viewOnTransfermarkt = language =>

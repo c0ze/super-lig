@@ -4,7 +4,21 @@ on:
   push:
     branches:
       - main
+  # Disabled while SofaScore blocks direct API refreshes with 403.
+  # schedule:
+  #   # GitHub schedules are UTC; this runs every Tuesday at 06:00 UTC.
+  #   - cron: '0 6 * * 2'
   workflow_dispatch:
+    inputs:
+      refresh_database:
+        description: 'Refresh SofaScore data before deploying'
+        required: true
+        type: boolean
+        default: false
+      season:
+        description: 'Optional season start year to refresh, for example 2025'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -37,7 +51,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+
+      - name: Run Python Tests
+        run: pytest
+
+      # Data refresh is paused while SofaScore blocks direct API access (403).
+      # Re-enable by restoring the `if:` conditions noted on each step.
+      - name: Refresh SofaScore Database (scheduled)
+        if: false  # restore: github.event_name == 'schedule'
+        run: |
+          python update_site.py
+          python youtube_summary_scraper.py
+
+      - name: Refresh SofaScore Database (manual)
+        if: false  # restore: github.event_name == 'workflow_dispatch' && inputs.refresh_database
+        env:
+          SEASON: ${{ inputs.season }}
+        run: |
+          if [ -n "$SEASON" ]; then
+            python update_site.py --season "$SEASON"
+          else
+            python update_site.py
+          fi
+          python youtube_summary_scraper.py
+
+      - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: npm ci
 

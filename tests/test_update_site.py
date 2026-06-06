@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from pathlib import Path
 from unittest import mock
 import unittest
 
@@ -73,6 +72,6 @@ class UpdateSiteTests(unittest.TestCase):
         build_site_db.assert_called_once()
         subprocess_run.assert_called_once_with(
             ["npm", "run", "build"],
-            cwd=Path("/home/arda/projects/utils/tff/frontend"),
+            cwd=update_site.FRONTEND_DIR,
             check=True,
         )

@@ -8,5 +8,6 @@ data/sofascore_super_lig.db
 frontend/node_modules/
 frontend/dist/
 frontend/lib/
+frontend/public/site.db
 frontend/src/*.res.js
 .claude/

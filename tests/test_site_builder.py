@@ -53,6 +53,22 @@ def create_sofascore_source_db(path: Path) -> None:
                 text TEXT,
                 raw_json TEXT
             );
+
+            CREATE TABLE match_videos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                match_id INTEGER NOT NULL,
+                source TEXT NOT NULL,
+                video_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                url TEXT NOT NULL,
+                embed_url TEXT NOT NULL,
+                thumbnail_url TEXT,
+                channel_title TEXT,
+                published_text TEXT,
+                matched_at TEXT NOT NULL,
+                raw_json TEXT NOT NULL,
+                UNIQUE(source, video_id)
+            );
             """
         )
 
@@ -320,6 +336,19 @@ def create_sofascore_source_db(path: Path) -> None:
                 ),
             ],
         )
+        conn.execute(
+            """
+            INSERT INTO match_videos
+            (match_id, source, video_id, title, url, embed_url, thumbnail_url,
+             channel_title, published_text, matched_at, raw_json)
+            VALUES
+            (1454658, 'youtube:beinsportsarsiv', 'demo-video', 'Beşiktaş 0 - 1 Fenerbahçe | Maç Özeti | 2010/11',
+             'https://www.youtube.com/watch?v=demo-video',
+             'https://www.youtube-nocookie.com/embed/demo-video',
+             'https://i.ytimg.com/vi/demo-video/hqdefault.jpg', 'beIN SPORTS Arşiv',
+             '1 year ago', '2026-05-15T00:00:00+00:00', '{}')
+            """
+        )
         conn.commit()
 
 
@@ -395,8 +424,7 @@ class SiteBuilderTests(unittest.TestCase):
                 sofascore_db_path=sofascore_path,
             )
 
-            self.assertEqual(result["matches"], 2)
-            self.assertEqual(result["events"], 9)
+            self.assertEqual(result, {"matches": 2, "events": 9, "videos": 1})
 
             with sqlite3.connect(site_path) as conn:
                 matches = conn.execute(
@@ -413,6 +441,13 @@ class SiteBuilderTests(unittest.TestCase):
                            home_score_before, away_score_before, home_score_after, away_score_after
                     FROM events
                     ORDER BY match_id, event_order
+                    """
+                ).fetchall()
+                videos = conn.execute(
+                    """
+                    SELECT match_id, source, video_id, title, url, embed_url,
+                           thumbnail_url, channel_title, published_text
+                    FROM match_videos
                     """
                 ).fetchall()
 
@@ -457,6 +492,22 @@ class SiteBuilderTests(unittest.TestCase):
                     ("1454658", 71, "71", 71, 0, "Home", "Second Yellow Card", 3, "yellowRed", "Professional foul", "Guti", "", 0, 1, 0, 1),
                 ],
             )
+            self.assertEqual(
+                videos,
+                [
+                    (
+                        "1454658",
+                        "youtube:beinsportsarsiv",
+                        "demo-video",
+                        "Beşiktaş 0 - 1 Fenerbahçe | Maç Özeti | 2010/11",
+                        "https://www.youtube.com/watch?v=demo-video",
+                        "https://www.youtube-nocookie.com/embed/demo-video",
+                        "https://i.ytimg.com/vi/demo-video/hqdefault.jpg",
+                        "beIN SPORTS Arşiv",
+                        "1 year ago",
+                    )
+                ],
+            )
 
     def test_build_site_db_from_transfermarkt_copies_existing_contract(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -494,6 +545,26 @@ class SiteBuilderTests(unittest.TestCase):
                 event,
                 ("tm-1", 12, "12", "Home", "Goal", "Normal oyun", "Asist: Tadic", "Dzeko", "Tadic", 0, 0, 1, 0),
             )
+
+    def test_build_site_db_refuses_empty_source_db(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            sofascore_path = tmp_path / "sofascore.db"
+            site_path = tmp_path / "site.db"
+            create_sofascore_source_db(sofascore_path)
+
+            with sqlite3.connect(sofascore_path) as conn:
+                conn.execute("DELETE FROM match_videos")
+                conn.execute("DELETE FROM incidents")
+                conn.execute("DELETE FROM matches")
+                conn.commit()
+
+            with self.assertRaisesRegex(RuntimeError, "Refusing to build an empty canonical DB"):
+                site_builder.build_site_db(
+                    source="sofascore",
+                    target_db_path=site_path,
+                    sofascore_db_path=sofascore_path,
+                )
 
 
 if __name__ == "__main__":
