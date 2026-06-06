@@ -1,6 +1,6 @@
 # Super Lig Atlas
 
-A data-driven frontend for Turkish Super Lig matches, backed by an embedded SQLite database and deployed as a static site to GitHub Pages at `super-lig.arda.tr`.
+A data-driven frontend for Turkish Super Lig matches, backed by an embedded SQLite database and deployed as a static site to GitHub Pages at [super-lig.arda.tr](https://super-lig.arda.tr).
 
 The project has two halves:
 
@@ -30,7 +30,7 @@ The project has two halves:
 - **Frontend**: ReScript, React 18, Vite 5
 - **In-browser SQL**: `sql.js`
 - **Hosting**: GitHub Pages
-- **Domain**: `super-lig.arda.tr`
+- **Domain**: [super-lig.arda.tr](https://super-lig.arda.tr)
 
 ## Repository Layout
 
@@ -509,8 +509,10 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 ### Trigger
 
 - push to `main`
-- every Tuesday at 06:00 UTC
-- manual workflow dispatch, optionally pinned to a season start year
+- manual workflow dispatch (optionally pinned to a season start year)
+
+The weekly scheduled refresh is currently paused while SofaScore blocks direct
+API access, so the data refresh steps below (6–8) are disabled.
 
 ### Pipeline
 
@@ -527,9 +529,11 @@ Deployment is handled by `.github/workflows/deploy.yml`.
 11. Upload `frontend/dist` as the GitHub Pages artifact
 12. Deploy that artifact with the official GitHub Pages actions
 
-Push deploys use the committed `data/site.db`. Scheduled and opted-in manual
-deploys rebuild `data/site.db` in the workflow first, so the deployed artifact
-contains the refreshed database even though CI does not commit it back to the repo.
+All deploys currently use the committed `data/site.db` (the in-CI refresh is
+paused), so data refreshes are done locally and committed. When the refresh is
+re-enabled, scheduled and opted-in manual deploys rebuild `data/site.db` in the
+workflow first, so the deployed artifact contains the refreshed database even
+though CI does not commit it back to the repo.
 
 The workflow uses `actions/configure-pages`, `actions/upload-pages-artifact`, and
 `actions/deploy-pages`. It does not publish via a `gh-pages` branch.
