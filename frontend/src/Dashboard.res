@@ -154,9 +154,11 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
         <h1>{React.string(Copy.dashboardTitle(language))}</h1>
         <p>{React.string(Copy.dashboardSubtitle(language))}</p>
         <div className="hero-actions">
-          <button className="button-primary" onClick={_ => navigate(Route.season(latestSeason))}>
-            {React.string(Copy.jumpToLatestSeason(language))}
-          </button>
+          {latestSeason == ""
+            ? React.null
+            : <button className="button-primary" onClick={_ => navigate(Route.season(latestSeason))}>
+                {React.string(Copy.jumpToLatestSeason(language))}
+              </button>}
           <button className="button-secondary" onClick={_ => Browser.scrollToId("season-archive")}>
             {React.string(Copy.browseArchive(language))}
           </button>

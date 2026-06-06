@@ -167,11 +167,11 @@ test("team archive seasons and season-scoped match lists are queryable", () => {
   matchStatement.free();
 
   assert.deepEqual(
-    matches.map(({id, season, matchday}) => ({id, season, matchday})),
+    matches.map(({id, season, matchday, has_video}) => ({id, season, matchday, has_video})),
     [
-      {id: "m3", season: "2025", matchday: 3},
-      {id: "m2", season: "2025", matchday: 2},
-      {id: "m1", season: "2025", matchday: 1},
+      {id: "m3", season: "2025", matchday: 3, has_video: 0},
+      {id: "m2", season: "2025", matchday: 2, has_video: 0},
+      {id: "m1", season: "2025", matchday: 1, has_video: 1},
     ],
   );
 });

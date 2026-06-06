@@ -878,9 +878,9 @@ button {
   min-height: 1.8rem;
   padding: 0.28rem 0.55rem;
   border-radius: var(--radius);
-  border: 1px solid rgba(216, 72, 58, 0.28);
-  background: rgba(216, 72, 58, 0.1);
-  color: #b13a2f;
+  border: 1px solid var(--accent-tint);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
   font-size: 0.72rem;
   font-weight: 700;
   white-space: nowrap;
