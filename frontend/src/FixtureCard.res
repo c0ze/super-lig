@@ -8,6 +8,7 @@ let make = (
   ~awayScore: int,
   ~language: Locale.t,
   ~navigate: Route.t => unit,
+  ~hasVideo: int=0,
   ~resultLabel: option<string>=?,
   ~resultClassName: option<string>=?,
 ) => {
@@ -33,14 +34,22 @@ let make = (
     onKeyDown={handleCardKeyDown}>
     <div className="match-card-topline">
       <div className="match-card-meta">{React.string(meta)}</div>
-      <button
-        className="match-timeline-link"
-        onClick={event => {
-          event->ReactEvent.Mouse.stopPropagation
-          openMatch()
-        }}>
-        {React.string(Copy.openTimeline(language))}
-      </button>
+      <div className="match-card-actions">
+        {hasVideo > 0
+          ? <span className="match-video-cue" title={Copy.matchSummaryVideoTitle(language)}>
+              <span ariaHidden=true>{React.string("▶")}</span>
+              <span>{React.string(Copy.videoCueLabel(language))}</span>
+            </span>
+          : React.null}
+        <button
+          className="match-timeline-link"
+          onClick={event => {
+            event->ReactEvent.Mouse.stopPropagation
+            openMatch()
+          }}>
+          {React.string(Copy.openTimeline(language))}
+        </button>
+      </div>
     </div>
 
     <div className="match-card-scoreline">

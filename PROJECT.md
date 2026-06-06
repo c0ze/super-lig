@@ -68,6 +68,7 @@ Data layer:
 - [scraper.py](scraper.py) — discovery, parsing, persistence
 - [sofascore_db.py](sofascore_db.py) — raw SofaScore schema
 - [sofascore_scraper.py](sofascore_scraper.py) — SofaScore discovery, parsing, persistence
+- [youtube_summary_scraper.py](youtube_summary_scraper.py) — beIN SPORTS YouTube summary matching
 - [site_db.py](site_db.py) — canonical frontend DB schema
 - [site_builder.py](site_builder.py) — source adapter builder
 - [update_site.py](update_site.py) — one-command SofaScore refresh + canonical rebuild
@@ -107,8 +108,8 @@ Deployment:
 - [.github/workflows/deploy.yml](.github/workflows/deploy.yml)
 - [frontend/scripts/sync-public-assets.mjs](frontend/scripts/sync-public-assets.mjs)
 - The deploy workflow runs on pushes to `main`, every Tuesday at 06:00 UTC, and manual dispatch
-- Scheduled deploys run `python update_site.py` before the frontend build so the Pages artifact includes refreshed SofaScore data
-- Manual deploys can refresh SofaScore data too, with an optional season start year input
+- Scheduled deploys run `python update_site.py` and `python youtube_summary_scraper.py` before the frontend build so the Pages artifact includes refreshed SofaScore and video data
+- Manual deploys can refresh SofaScore and video data too, with an optional season start year input
 - CI refreshes the deployed artifact only; it does not commit the regenerated SQLite DB back to the repo
 
 ## Commands
@@ -122,6 +123,7 @@ python sofascore_db.py
 python scraper.py --start 2010 --end 2025
 python scraper.py --start 2010 --end 2025 --refresh
 python sofascore_scraper.py --start 2010 --end 2026
+python youtube_summary_scraper.py
 python site_builder.py --source sofascore
 python update_site.py
 ```
@@ -198,6 +200,7 @@ Frontend timelines and team-derived metrics depend on these columns.
 
 - The frontend should consume the canonical `data/site.db`, not the raw source DBs
 - `site_builder.py` currently supports `--source sofascore` and `--source transfermarkt`
+- `youtube_summary_scraper.py` enriches `match_videos` from the beIN SPORTS Arşiv and beIN SPORTS Türkiye YouTube channels; by default it writes to the raw SofaScore DB when present and falls back to canonical `data/site.db` for local clean-checkout builds
 - `frontend/scripts/sync-public-assets.mjs` builds `data/site.db` automatically before copying it into `frontend/public/site.db`
 - `npm run dev` and `npm run build` both run the asset sync before Vite serves or bundles the app
 - If the selected raw source DB exists, the sync script rebuilds `data/site.db`
@@ -208,7 +211,7 @@ Frontend timelines and team-derived metrics depend on these columns.
 ### Latest-data policy
 
 - The live site currently pivots off SofaScore, not Transfermarkt
-- To pull the latest games, refresh `data/sofascore_super_lig.db` and then rebuild `data/site.db`
+- To pull the latest games, refresh `data/sofascore_super_lig.db`, run YouTube enrichment, and then rebuild `data/site.db`
 - Recommended update flow:
   - `python update_site.py --frontend-build`
 - `python update_site.py` infers the active season and refreshes only that season by default

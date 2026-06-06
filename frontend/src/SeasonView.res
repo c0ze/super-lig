@@ -32,6 +32,7 @@ type matchRow = {
   away_team: string,
   home_score: int,
   away_score: int,
+  has_video: int,
 }
 
 type state = {
@@ -93,7 +94,8 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       [year],
     )
     let matches: array<matchRow> = Database.runQuery(
-      "SELECT id, date, matchday, home_team, away_team, home_score, away_score " ++
+      "SELECT id, date, matchday, home_team, away_team, home_score, away_score, " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video " ++
       "FROM matches WHERE season = ? ORDER BY matchday DESC, home_team ASC",
       [year],
     )
@@ -243,6 +245,7 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
               awayScore={match.away_score}
               language
               navigate
+              hasVideo={match.has_video}
             />
           }))}
         </div>

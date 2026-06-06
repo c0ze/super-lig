@@ -39,6 +39,7 @@ type matchRow = {
   away_team: string,
   home_score: int,
   away_score: int,
+  has_video: int,
 }
 
 type eventRow = {
@@ -117,7 +118,8 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
       [],
     )
     let recentMatches: array<matchRow> = Database.runQuery(
-      "SELECT id, season, matchday, home_team, away_team, home_score, away_score " ++
+      "SELECT id, season, matchday, home_team, away_team, home_score, away_score, " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video " ++
       "FROM matches WHERE season = (SELECT MAX(season) FROM matches) " ++
       "ORDER BY matchday DESC, home_team ASC LIMIT 6",
       [],
@@ -332,6 +334,7 @@ let make = (~language: Locale.t, ~latestSeason: string, ~navigate: Route.t => un
               awayScore={match.away_score}
               language
               navigate
+              hasVideo={match.has_video}
             />
           }))}
         </div>

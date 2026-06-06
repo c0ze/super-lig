@@ -61,6 +61,7 @@ let playerMatchesBySeasonSql =
   playerEventsCte ++
   "SELECT " ++
   "id, season, matchday, home_team, away_team, home_score, away_score, " ++
+  "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = player_events.id) THEN 1 ELSE 0 END AS has_video, " ++
   "COALESCE(MAX(team_name), '') AS team_name, " ++
   "COALESCE(SUM(goals), 0) AS goals, " ++
   "COALESCE(SUM(assists), 0) AS assists, " ++

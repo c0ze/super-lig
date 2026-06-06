@@ -36,6 +36,18 @@ EVENT_COLUMNS = (
     "away_score_after",
 )
 
+MATCH_VIDEO_COLUMNS = (
+    "match_id",
+    "source",
+    "video_id",
+    "title",
+    "url",
+    "embed_url",
+    "thumbnail_url",
+    "channel_title",
+    "published_text",
+)
+
 SCHEMA_STATEMENTS = (
     """
     CREATE TABLE IF NOT EXISTS matches (
@@ -73,6 +85,22 @@ SCHEMA_STATEMENTS = (
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS match_videos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        video_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        url TEXT NOT NULL,
+        embed_url TEXT NOT NULL,
+        thumbnail_url TEXT,
+        channel_title TEXT,
+        published_text TEXT,
+        UNIQUE(source, video_id),
+        FOREIGN KEY (match_id) REFERENCES matches (id) ON DELETE CASCADE
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS build_meta (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
@@ -83,6 +111,7 @@ SCHEMA_STATEMENTS = (
     "CREATE INDEX IF NOT EXISTS idx_matches_away_team ON matches (away_team)",
     "CREATE INDEX IF NOT EXISTS idx_events_match_id ON events (match_id)",
     "CREATE INDEX IF NOT EXISTS idx_events_event_type ON events (event_type)",
+    "CREATE INDEX IF NOT EXISTS idx_match_videos_match_id ON match_videos (match_id)",
 )
 
 
@@ -125,6 +154,17 @@ def save_match_bundle(
             f"INSERT INTO events ({', '.join(EVENT_COLUMNS)}) VALUES ({event_placeholders})",
             [_ordered_values(row, EVENT_COLUMNS) for row in event_rows],
         )
+
+
+def save_match_videos(conn: sqlite3.Connection, video_rows: list[dict]) -> None:
+    if not video_rows:
+        return
+
+    placeholders = ", ".join("?" for _ in MATCH_VIDEO_COLUMNS)
+    conn.executemany(
+        f"INSERT OR REPLACE INTO match_videos ({', '.join(MATCH_VIDEO_COLUMNS)}) VALUES ({placeholders})",
+        [_ordered_values(row, MATCH_VIDEO_COLUMNS) for row in video_rows],
+    )
 
 
 def replace_metadata(conn: sqlite3.Connection, metadata: dict[str, str]) -> None:

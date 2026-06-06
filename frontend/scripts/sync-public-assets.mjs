@@ -23,11 +23,35 @@ const fileExists = async (path) => {
   }
 };
 
+const runPython = (args) => {
+  let missingPython = null;
+  for (const command of ["python", "python3"]) {
+    const result = spawnSync(command, args, {
+      cwd: repoRoot,
+      stdio: "inherit",
+    });
+    if (result.error?.code === "ENOENT") {
+      missingPython = result.error;
+      continue;
+    }
+    return result;
+  }
+
+  return { status: 127, error: missingPython };
+};
+
+const ensureCanonicalSchema = () => {
+  const schemaResult = runPython(["-c", "import site_db; site_db.init_db()"]);
+
+  if (schemaResult.status !== 0) {
+    throw new Error("Failed to ensure canonical site.db schema");
+  }
+};
+
 let rebuilt = false;
 
 if (await fileExists(sourceDb)) {
-  const buildResult = spawnSync(
-    "python",
+  const buildResult = runPython(
     [
       resolve(repoRoot, "site_builder.py"),
       "--source",
@@ -35,10 +59,6 @@ if (await fileExists(sourceDb)) {
       "--target",
       canonicalDb,
     ],
-    {
-      cwd: repoRoot,
-      stdio: "inherit",
-    },
   );
 
   if (buildResult.status !== 0) {
@@ -49,6 +69,7 @@ if (await fileExists(sourceDb)) {
   console.warn(
     `Source DB for '${source}' not found at ${sourceDb}. Reusing existing canonical site.db.`,
   );
+  ensureCanonicalSchema();
 } else {
   throw new Error(
     `Neither source DB (${sourceDb}) nor canonical DB (${canonicalDb}) is available.`,

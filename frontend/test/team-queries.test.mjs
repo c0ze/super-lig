@@ -44,6 +44,19 @@ const makeDb = () => {
       home_score_after INTEGER,
       away_score_after INTEGER
     );
+
+    CREATE TABLE match_videos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_id TEXT NOT NULL,
+      source TEXT NOT NULL,
+      video_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      embed_url TEXT NOT NULL,
+      thumbnail_url TEXT,
+      channel_title TEXT,
+      published_text TEXT
+    );
   `);
 
   db.run(`
@@ -72,6 +85,9 @@ const makeDb = () => {
       ('m2', 90, '90', 90, 0, 'Away', 'Missed Penalty', 1, 'Faul penaltısı', 'Kurtarış', 'Talisca', 'Keeper', 0, 0, 0, 0),
       ('m3', 20, '20', 20, 0, 'Home', 'VAR Decision', 0, 'penaltyNotAwarded', 'overturned', 'Home Forward', '', 0, 0, 0, 0),
       ('m3', 55, '55', 55, 0, 'Home', 'Penalty Goal', 1, 'Penaltı', '', 'Talisca', 'Talisca', 2, 1, 3, 1);
+
+    INSERT INTO match_videos (match_id, source, video_id, title, url, embed_url)
+    VALUES ('m1', 'youtube:test', 'video-m1', 'Fenerbahce 2-1 Rizespor', '', '');
   `);
 
   return db;
@@ -215,6 +231,7 @@ test("var swing wins only count favorable var decisions that turn into one-goal 
       away_team: "Rizespor",
       home_score: 2,
       away_score: 1,
+      has_video: 1,
       has_goal_swing: 0,
       has_penalty_swing: 1,
       has_red_card_swing: 0,

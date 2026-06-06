@@ -44,6 +44,19 @@ const makeDb = () => {
       home_score_after INTEGER,
       away_score_after INTEGER
     );
+
+    CREATE TABLE match_videos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_id TEXT NOT NULL,
+      source TEXT NOT NULL,
+      video_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      embed_url TEXT NOT NULL,
+      thumbnail_url TEXT,
+      channel_title TEXT,
+      published_text TEXT
+    );
   `);
 
   db.run(`
@@ -64,6 +77,9 @@ const makeDb = () => {
       ('m2', 18, '18', 18, 0, 'Home', 'Goal', 1, '', '', 'Mauro Icardi', 'Leroy Sane', 0, 0, 1, 0),
       ('m2', 75, '75', 75, 0, 'Home', 'Penalty Goal', 2, '', '', 'Leroy Sane', 'Leroy Sane', 2, 0, 3, 0),
       ('m3', 11, '11', 11, 0, 'Away', 'Goal', 1, '', '', 'Leroy Sane', 'Dries Mertens', 0, 0, 0, 1);
+
+    INSERT INTO match_videos (match_id, source, video_id, title, url, embed_url)
+    VALUES ('m2', 'youtube:test', 'video-m2', 'Galatasaray 3-0 Kasimpasa', '', '');
   `);
 
   return db;

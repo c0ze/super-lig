@@ -11,6 +11,7 @@ type matchRow = {
   away_team: string,
   home_score: int,
   away_score: int,
+  has_video: int,
   has_penalty: int,
   has_red_card: int,
 }
@@ -135,6 +136,7 @@ let make = (~team: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
                 awayScore={match.away_score}
                 language
                 navigate
+                hasVideo={match.has_video}
                 resultLabel={reasonLabel(language, match)}
                 resultClassName="result-pill neutral"
               />
