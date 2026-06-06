@@ -5,7 +5,7 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
-import requests
+from curl_cffi import requests
 
 from sofascore_db import (
     DB_PATH,
@@ -63,7 +63,7 @@ def parse_season_start_year(season_year: str) -> int:
 
 
 def create_session() -> requests.Session:
-    session = requests.Session()
+    session = requests.Session(impersonate="chrome")
     session.headers.update(HEADERS)
     return session
 
@@ -82,7 +82,7 @@ def fetch_json(
             response = session.get(url, timeout=timeout)
             response.raise_for_status()
             return response.json()
-        except requests.RequestException as exc:
+        except requests.exceptions.RequestException as exc:
             last_error = exc
             if attempt == max_retries:
                 break
