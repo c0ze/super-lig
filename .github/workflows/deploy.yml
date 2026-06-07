@@ -60,24 +60,24 @@ jobs:
         run: pytest
 
       # Data refresh is paused while SofaScore blocks direct API access (403).
-      # Re-enable by restoring the `if:` conditions noted on each step.
-      - name: Refresh SofaScore Database (scheduled)
-        if: false  # restore: github.event_name == 'schedule'
-        run: |
-          python update_site.py
-          python youtube_summary_scraper.py
-
-      - name: Refresh SofaScore Database (manual)
-        if: false  # restore: github.event_name == 'workflow_dispatch' && inputs.refresh_database
-        env:
-          SEASON: ${{ inputs.season }}
-        run: |
-          if [ -n "$SEASON" ]; then
-            python update_site.py --season "$SEASON"
-          else
-            python update_site.py
-          fi
-          python youtube_summary_scraper.py
+      # To re-enable, uncomment the steps below (and the schedule trigger above).
+      # - name: Refresh SofaScore Database (scheduled)
+      #   if: github.event_name == 'schedule'
+      #   run: |
+      #     python update_site.py
+      #     python youtube_summary_scraper.py
+      #
+      # - name: Refresh SofaScore Database (manual)
+      #   if: github.event_name == 'workflow_dispatch' && inputs.refresh_database
+      #   env:
+      #     SEASON: ${{ inputs.season }}
+      #   run: |
+      #     if [ -n "$SEASON" ]; then
+      #       python update_site.py --season "$SEASON"
+      #     else
+      #       python update_site.py
+      #     fi
+      #     python youtube_summary_scraper.py
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
