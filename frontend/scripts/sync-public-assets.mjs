@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
-import { access, copyFile, mkdir } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gzipSync } from "node:zlib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const frontendRoot = resolve(__dirname, "..");
@@ -76,25 +77,25 @@ if (await fileExists(sourceDb)) {
   );
 }
 
-const assets = [
-  {
-    from: canonicalDb,
-    to: resolve(publicDir, "site.db"),
-  },
-  {
-    from: resolve(frontendRoot, "node_modules", "sql.js", "dist", "sql-wasm.wasm"),
-    to: resolve(publicDir, "sql-wasm.wasm"),
-  },
-];
-
 await mkdir(publicDir, { recursive: true });
 
-for (const asset of assets) {
-  await copyFile(asset.from, asset.to);
-}
+// Ship the DB gzip-compressed (~3x smaller) and decompress it in the browser.
+// The ".gzip" extension (not ".gz") avoids dev/prod static servers auto-setting
+// Content-Encoding: gzip, which would transparently decompress and conflict with
+// our explicit DecompressionStream in SqlHelper.
+const dbBuffer = await readFile(canonicalDb);
+await writeFile(resolve(publicDir, "site.db.gzip"), gzipSync(dbBuffer, { level: 9 }));
+// Drop uncompressed / legacy copies so they never ship in dist.
+await rm(resolve(publicDir, "site.db"), { force: true });
+await rm(resolve(publicDir, "site.db.gz"), { force: true });
+
+await copyFile(
+  resolve(frontendRoot, "node_modules", "sql.js", "dist", "sql-wasm.wasm"),
+  resolve(publicDir, "sql-wasm.wasm"),
+);
 
 console.log(
   rebuilt
-    ? `Built site.db from ${source} and synced it with sql.js WASM into frontend/public`
-    : "Reused existing site.db and synced it with sql.js WASM into frontend/public",
+    ? `Built site.db from ${source}, gzipped it, and synced sql.js WASM into frontend/public`
+    : "Reused existing site.db, gzipped it, and synced sql.js WASM into frontend/public",
 );

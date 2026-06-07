@@ -9,5 +9,6 @@ frontend/node_modules/
 frontend/dist/
 frontend/lib/
 frontend/public/site.db
+frontend/public/site.db.gzip
 frontend/src/*.res.js
 .claude/
