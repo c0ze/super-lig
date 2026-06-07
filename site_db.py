@@ -15,6 +15,7 @@ MATCH_COLUMNS = (
     "home_score",
     "away_score",
     "url",
+    "start_timestamp",
 )
 
 EVENT_COLUMNS = (
@@ -59,7 +60,8 @@ SCHEMA_STATEMENTS = (
         away_team TEXT,
         home_score INTEGER,
         away_score INTEGER,
-        url TEXT
+        url TEXT,
+        start_timestamp INTEGER
     )
     """,
     """
@@ -109,6 +111,7 @@ SCHEMA_STATEMENTS = (
     "CREATE INDEX IF NOT EXISTS idx_matches_season ON matches (season)",
     "CREATE INDEX IF NOT EXISTS idx_matches_home_team ON matches (home_team)",
     "CREATE INDEX IF NOT EXISTS idx_matches_away_team ON matches (away_team)",
+    "CREATE INDEX IF NOT EXISTS idx_matches_start_timestamp ON matches (start_timestamp)",
     "CREATE INDEX IF NOT EXISTS idx_events_match_id ON events (match_id)",
     "CREATE INDEX IF NOT EXISTS idx_events_event_type ON events (event_type)",
     "CREATE INDEX IF NOT EXISTS idx_match_videos_match_id ON match_videos (match_id)",

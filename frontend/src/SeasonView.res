@@ -96,7 +96,7 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
     let matches: array<matchRow> = Database.runQuery(
       "SELECT id, date, matchday, home_team, away_team, home_score, away_score, " ++
       "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video " ++
-      "FROM matches WHERE season = ? ORDER BY matchday DESC, home_team ASC",
+      "FROM matches WHERE season = ? ORDER BY start_timestamp DESC, matchday DESC, home_team ASC",
       [year],
     )
 

@@ -429,7 +429,7 @@ class SiteBuilderTests(unittest.TestCase):
             with sqlite3.connect(site_path) as conn:
                 matches = conn.execute(
                     """
-                    SELECT id, season, matchday, date, home_team, away_team, home_score, away_score, url
+                    SELECT id, season, matchday, date, home_team, away_team, home_score, away_score, url, start_timestamp
                     FROM matches
                     ORDER BY CAST(season AS INTEGER), id
                     """
@@ -464,6 +464,7 @@ class SiteBuilderTests(unittest.TestCase):
                         0,
                         1,
                         "https://www.sofascore.com/football/match/fenerbahce-besiktas/example#id:1454658",
+                        1285441200,
                     ),
                     (
                         "14109887",
@@ -475,6 +476,7 @@ class SiteBuilderTests(unittest.TestCase):
                         1,
                         2,
                         "https://www.sofascore.com/football/match/genclerbirligi-galatasaray/llbscgd#id:14109887",
+                        1776531600,
                     ),
                 ],
             )
