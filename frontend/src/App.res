@@ -121,6 +121,7 @@ let make = () => {
       </button>
 
       <div className="topbar-actions">
+        <SearchBox language navigate />
         <button
           className={isHomeActive ? "nav-chip active" : "nav-chip"}
           onClick={_ => navigate(Route.dashboard)}>

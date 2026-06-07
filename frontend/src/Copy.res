@@ -20,6 +20,60 @@ let navLatestSeason = (language, season) => {
   }
 }
 
+let searchPlaceholder = language =>
+  switch language {
+  | #tr => "Takım veya oyuncu ara"
+  | #en => "Search team or player"
+  }
+
+let searchTeamTag = language =>
+  switch language {
+  | #tr => "Takım"
+  | #en => "Team"
+  }
+
+let searchPlayerTag = language =>
+  switch language {
+  | #tr => "Oyuncu"
+  | #en => "Player"
+  }
+
+let filterAllClubs = language =>
+  switch language {
+  | #tr => "Tüm takımlar"
+  | #en => "All clubs"
+  }
+
+let filterAllEvents = language =>
+  switch language {
+  | #tr => "Tüm olaylar"
+  | #en => "All events"
+  }
+
+let filterRedCards = language =>
+  switch language {
+  | #tr => "Kırmızı kartlar"
+  | #en => "Red cards"
+  }
+
+let filterPenalties = language =>
+  switch language {
+  | #tr => "Penaltılar"
+  | #en => "Penalties"
+  }
+
+let filterVar = language =>
+  switch language {
+  | #tr => "VAR kararları"
+  | #en => "VAR decisions"
+  }
+
+let filterNoMatches = language =>
+  switch language {
+  | #tr => "Filtreye uygun maç yok."
+  | #en => "No matches for this filter."
+  }
+
 let loadingTitle = language =>
   switch language {
   | #tr => "Veri tabani yükleniyor"
