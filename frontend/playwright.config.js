@@ -17,7 +17,9 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: `npm run dev -- --port ${PORT} --strictPort`,
+    // Compile ReScript first: the generated *.res.js are gitignored, so a fresh
+    // checkout (CI) has none and vite can't resolve them without this.
+    command: `npm run res:build && npm run dev -- --port ${PORT} --strictPort`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
