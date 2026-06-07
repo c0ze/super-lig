@@ -33,6 +33,9 @@ type matchRow = {
   home_score: int,
   away_score: int,
   has_video: int,
+  has_red_card: int,
+  has_penalty: int,
+  has_var: int,
 }
 
 type state = {
@@ -52,6 +55,8 @@ let emptyState = {
 @react.component
 let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
   let (state, setState) = React.useState(() => emptyState)
+  let (selectedClub, setSelectedClub) = React.useState(() => "")
+  let (selectedEventType, setSelectedEventType) = React.useState(() => "")
 
   React.useEffect1(() => {
     let summaries: array<seasonSummary> = Database.runQuery(
@@ -95,7 +100,10 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
     )
     let matches: array<matchRow> = Database.runQuery(
       "SELECT id, date, matchday, home_team, away_team, home_score, away_score, " ++
-      "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM match_videos v WHERE v.match_id = matches.id) THEN 1 ELSE 0 END AS has_video, " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.match_id = matches.id AND e.event_type IN ('Red Card', 'Second Yellow Card')) THEN 1 ELSE 0 END AS has_red_card, " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.match_id = matches.id AND e.event_type IN ('Penalty Goal', 'Missed Penalty')) THEN 1 ELSE 0 END AS has_penalty, " ++
+      "CASE WHEN EXISTS (SELECT 1 FROM events e WHERE e.match_id = matches.id AND e.event_type = 'VAR Decision') THEN 1 ELSE 0 END AS has_var " ++
       "FROM matches WHERE season = ? ORDER BY start_timestamp DESC, matchday DESC, home_team ASC",
       [year],
     )
@@ -112,6 +120,31 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
 
   let leader =
     Js.Array2.length(state.standings) > 0 ? Some(Js.Array2.unsafe_get(state.standings, 0)) : None
+
+  let clubs = {
+    let acc = []
+    state.matches->Js.Array2.forEach(match => {
+      if !(acc->Js.Array2.includes(match.home_team)) {
+        acc->Js.Array2.push(match.home_team)->ignore
+      }
+      if !(acc->Js.Array2.includes(match.away_team)) {
+        acc->Js.Array2.push(match.away_team)->ignore
+      }
+    })
+    acc->Js.Array2.sortInPlace
+  }
+
+  let visibleMatches = state.matches->Js.Array2.filter(match => {
+    let clubOk =
+      selectedClub == "" || match.home_team == selectedClub || match.away_team == selectedClub
+    let typeOk = switch selectedEventType {
+    | "red" => match.has_red_card == 1
+    | "penalty" => match.has_penalty == 1
+    | "var" => match.has_var == 1
+    | _ => true
+    }
+    clubOk && typeOk
+  })
 
   <div className="season-page">
     <section className="page-hero compact">
@@ -232,9 +265,38 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
       <article className="section-card section-span-3">
         <div className="section-heading">
           <h2>{React.string(Copy.matchListTitle(language))}</h2>
+          <div className="filter-bar">
+            <select
+              className="filter-select"
+              value={selectedClub}
+              onChange={event => {
+                let value: string = ReactEvent.Form.target(event)["value"]
+                setSelectedClub(_ => value)
+              }}>
+              <option value="">{React.string(Copy.filterAllClubs(language))}</option>
+              {React.array(
+                clubs->Js.Array2.map(club => <option key={club} value={club}>{React.string(club)}</option>),
+              )}
+            </select>
+            <select
+              className="filter-select"
+              value={selectedEventType}
+              onChange={event => {
+                let value: string = ReactEvent.Form.target(event)["value"]
+                setSelectedEventType(_ => value)
+              }}>
+              <option value="">{React.string(Copy.filterAllEvents(language))}</option>
+              <option value="red">{React.string(Copy.filterRedCards(language))}</option>
+              <option value="penalty">{React.string(Copy.filterPenalties(language))}</option>
+              <option value="var">{React.string(Copy.filterVar(language))}</option>
+            </select>
+          </div>
         </div>
         <div className="match-list">
-          {React.array(state.matches->Array.map(match => {
+          {Js.Array2.length(visibleMatches) == 0
+            ? <p className="filter-empty">{React.string(Copy.filterNoMatches(language))}</p>
+            : React.null}
+          {React.array(visibleMatches->Array.map(match => {
             <FixtureCard
               key={match.id}
               matchId={match.id}
