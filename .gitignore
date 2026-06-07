@@ -8,6 +8,8 @@ data/sofascore_super_lig.db
 frontend/node_modules/
 frontend/dist/
 frontend/lib/
+frontend/test-results/
+frontend/playwright-report/
 frontend/public/site.db
 frontend/public/site.db.gzip
 frontend/src/*.res.js
