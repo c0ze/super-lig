@@ -17,8 +17,15 @@ export const initDb = async () => {
       locateFile: (file) => resolveAsset(file),
     });
 
-    const dbFile = await fetch(resolveAsset('site.db'));
-    const buf = await dbFile.arrayBuffer();
+    const dbFile = await fetch(resolveAsset('site.db.gzip'));
+    if (!dbFile.ok) {
+      throw new Error(`Failed to fetch site.db.gzip: ${dbFile.status}`);
+    }
+    if (typeof DecompressionStream === 'undefined') {
+      throw new Error('Browser does not support DecompressionStream');
+    }
+    const decompressed = dbFile.body.pipeThrough(new DecompressionStream('gzip'));
+    const buf = await new Response(decompressed).arrayBuffer();
 
     dbInstance = new SQL.Database(new Uint8Array(buf));
     return true;
