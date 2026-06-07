@@ -85,6 +85,7 @@ Columns:
 - `season`
 - `matchday`
 - `date`
+- `start_timestamp` (epoch seconds, UTC — sortable/machine-friendly)
 - `home_team`
 - `away_team`
 - `home_score`
