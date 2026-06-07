@@ -1,0 +1,16 @@
+# zizmor configuration.
+# Accept tag-pinned actions (e.g. actions/checkout@v4) instead of requiring full
+# commit-hash pins. Every other security audit (template injection, dangerous
+# triggers, excessive permissions, ...) stays enabled.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "*": ref-pin
+  # deploy.yml uses GitHub's standard Pages permissions (pages: write +
+  # id-token: write at the workflow level). They are the minimum the Pages
+  # deploy needs; scoping them per-job risks breaking the deploy, so the
+  # workflow-level grant is intentional here.
+  excessive-permissions:
+    ignore:
+      - deploy.yml
