@@ -59,6 +59,8 @@ let make = (~year: string, ~language: Locale.t, ~navigate: Route.t => unit) => {
   let (selectedEventType, setSelectedEventType) = React.useState(() => "")
 
   React.useEffect1(() => {
+    setSelectedClub(_ => "")
+    setSelectedEventType(_ => "")
     let summaries: array<seasonSummary> = Database.runQuery(
       "SELECT COUNT(*) AS matches, SUM(home_score + away_score) AS goals, " ++
       "COUNT(DISTINCT home_team) AS teams, MAX(matchday) AS max_matchday, " ++

@@ -3,6 +3,13 @@ type searchHit = {
   kind: string,
 }
 
+// True when focus moved entirely outside the search container (so the
+// dropdown should close). Keeps it open while focus moves to a result button,
+// which is what makes keyboard selection work.
+let focusLeftContainer: ReactEvent.Focus.t => bool = %raw(`function (event) {
+  return !event.currentTarget.contains(event.relatedTarget);
+}`)
+
 @react.component
 let make = (~language: Locale.t, ~navigate: Route.t => unit) => {
   let (query, setQuery) = React.useState(() => "")
@@ -41,14 +48,18 @@ let make = (~language: Locale.t, ~navigate: Route.t => unit) => {
 
   let showResults = focused && Js.Array2.length(hits) > 0
 
-  <div className="search-box">
+  <div
+    className="search-box"
+    onFocus={_ => setFocused(_ => true)}
+    onBlur={event =>
+      if focusLeftContainer(event) {
+        setFocused(_ => false)
+      }}>
     <input
       className="search-input"
       type_="search"
       value={query}
       placeholder={Copy.searchPlaceholder(language)}
-      onFocus={_ => setFocused(_ => true)}
-      onBlur={_ => setFocused(_ => false)}
       onChange={event => {
         let value: string = ReactEvent.Form.target(event)["value"]
         setQuery(_ => value)
@@ -59,12 +70,7 @@ let make = (~language: Locale.t, ~navigate: Route.t => unit) => {
           {React.array(
             hits->Js.Array2.mapi((hit, index) =>
               <li key={hit.kind ++ "-" ++ Int.toString(index) ++ "-" ++ hit.name}>
-                <button
-                  className="search-result"
-                  onMouseDown={event => {
-                    ReactEvent.Mouse.preventDefault(event)
-                    goTo(hit)
-                  }}>
+                <button className="search-result" onClick={_ => goTo(hit)}>
                   <span className="search-result-name">{React.string(hit.name)}</span>
                   <span className="search-result-kind">
                     {React.string(
