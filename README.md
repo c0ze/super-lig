@@ -18,12 +18,13 @@ The project has two halves:
 - Team-specific `VAR swing wins` drill-down pages
 - Player archive pages with season tabs and contribution match lists
 - Match detail pages with richer event timelines
+- Team/player search and season match-list filters (club, event type)
 - Built-in TR / EN language toggle
 - Static deployment with no backend runtime
 
 ## Tech Stack
 
-- **Scraper**: Python, `requests`, `beautifulsoup4`, `lxml`, SQLite
+- **Scraper**: Python, `requests`, `curl_cffi` (browser TLS impersonation for SofaScore), `beautifulsoup4`, `lxml`, SQLite
 - **Transfermarkt DB**: SQLite (`data/super_lig.db`)
 - **SofaScore DB**: SQLite (`data/sofascore_super_lig.db`)
 - **Canonical Site DB**: SQLite (`data/site.db`)
@@ -459,6 +460,7 @@ The frontend is intentionally backend-free in production.
 - `ProppedUpView.res`: team-specific `kollandığı maçlar` drill-down
 - `VarSwingView.res`: team-specific VAR swing wins drill-down
 - `MatchView.res`: single match timeline page
+- `SearchBox.res`: top-bar team/player search
 - `TeamQueries.res`: shared SQL used by team pages
 - `PlayerQueries.res`: shared SQL used by player pages
 - `Copy.res`: TR / EN labels and UI copy
@@ -497,10 +499,11 @@ cd frontend
 npm test
 ```
 
-The scraper has Python regression tests for schema setup and parsing rules:
+The Python side has regression tests for the schemas, the canonical builder, the
+YouTube enrichment, and parsing rules:
 
 ```bash
-python -m unittest tests.test_scraper
+pytest
 ```
 
 ## Deployment
@@ -584,7 +587,8 @@ python update_site.py --frontend-build
 
 Some good next steps for the project:
 
-- normalize match dates into machine-friendly values
-- add filters for seasons, clubs, and event types
-- add browser-level regression tests for key flows
-- unify historical club-name variants when a single team changes naming across seasons
+- add browser-level (Playwright) regression tests for key flows
+- automate the SofaScore refresh in CI now that `curl_cffi` clears the bot block (validate from a CI runner first)
+- avoid committing the ~10 MB `data/site.db` on every data update (rebuild in CI, or use Git LFS)
+- add lineup/appearance data so squad tables include quiet full-match appearances
+- improve first-load performance (the browser downloads the whole SQLite database up front)

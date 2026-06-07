@@ -25,6 +25,8 @@ There is no production backend.
 - Team `kollandığı maçlar` / `propped up games` drill-down
 - Team `VAR swing wins` drill-down
 - Match timeline
+- Team / player search
+- Season match-list filters (club, event type)
 - TR / EN language toggle
 - Hash-based routing (Pages-compatible)
 
@@ -155,6 +157,8 @@ Covers ReScript compile, Node tests, asset sync, production Vite build.
 
 In raw Transfermarkt data, `matches.date` is raw display text, not ISO.
 In canonical `site.db`, adapter-built rows may use UTC timestamps rendered as text.
+Canonical `matches` also carries `start_timestamp` (epoch seconds, UTC) for
+sortable/filterable dates; the frontend orders season fixtures by it.
 
 ### Team values in events
 
