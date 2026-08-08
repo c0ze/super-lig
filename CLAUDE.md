@@ -1,35 +1,58 @@
-# CLAUDE.md — 12-rue
+# CLAUDE.md
 
-These rules apply to every task in this project unless explicitly overridden.
+These rules apply to every task in this repository unless explicitly overridden.
 Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
-Project-specific handoff notes, constraints, key files, and validation details live in
-[PROJECT.md](PROJECT.md). Read that file before changing project behavior.
+This file is generic and identical across projects. **It contains no project-specific
+information.** `AGENTS.md` is a symlink to this file, so Claude Code, Codex, Kimi, Cursor
+and anything else reading either name get the same rules.
 
-## Rule 1 — Think Before Coding
+## Where knowledge lives
+
+Read in this order. Stop as soon as you have what you need.
+
+| Layer | File | Contains |
+|---|---|---|
+| 1. Rules | `CLAUDE.md` = `AGENTS.md` (this file) | How to work. Generic, never project-specific. |
+| 2. Project | [PROJECT.md](PROJECT.md) | This project: architecture, constraints, key files, how to run and validate. |
+| 3. Wiki | `llm-wiki/index.md` (if present) | Compounding knowledge: decisions, entities, sources. |
+
+**Before changing project behavior, read `PROJECT.md`.** It is the handoff document and
+takes precedence over anything you infer from the code.
+
+If a project has an `llm-wiki/`, it follows the Karpathy LLM-wiki pattern: raw sources are
+compiled once into interlinked pages, and you query the wiki rather than re-deriving from
+sources. Start at `index.md` and `agent-rules.md`. Append to `log.md` when you change it.
+Treat archived pages as historical only — never cite them as current.
+
+Keep the layers honest: a fact that is true of every project belongs here; a fact true of
+this project belongs in `PROJECT.md`; a fact that took real work to establish belongs in
+the wiki. Duplicating across layers is how they drift.
+
+## Rule 1 — Think before coding
 State assumptions explicitly. If uncertain, ask rather than guess.
 Present multiple interpretations when ambiguity exists.
 Push back when a simpler approach exists.
 Stop when confused. Name what's unclear.
 
-## Rule 2 — Simplicity First
+## Rule 2 — Simplicity first
 Minimum code that solves the problem. Nothing speculative.
 No features beyond what was asked. No abstractions for single-use code.
 Test: would a senior engineer say this is overcomplicated? If yes, simplify.
 
-## Rule 3 — Surgical Changes
+## Rule 3 — Surgical changes
 Touch only what you must. Clean up only your own mess.
 Don't "improve" adjacent code, comments, or formatting.
 Don't refactor what isn't broken. Match existing style.
 
-## Rule 4 — Goal-Driven Execution
+## Rule 4 — Goal-driven execution
 Define success criteria. Loop until verified.
 Don't follow steps. Define success and iterate.
 Strong success criteria let you loop independently.
 
 ## Rule 5 — Use the model only for judgment calls
-Use me for: classification, drafting, summarization, extraction.
-Do NOT use me for: routing, retries, deterministic transforms.
+Use the model for: classification, drafting, summarization, extraction.
+Do NOT use it for: routing, retries, deterministic transforms.
 If code can answer, code answers.
 
 ## Rule 6 — Token budgets are not advisory
@@ -63,3 +86,8 @@ If you genuinely think a convention is harmful, surface it. Don't fork silently.
 "Completed" is wrong if anything was skipped silently.
 "Tests pass" is wrong if any were skipped.
 Default to surfacing uncertainty, not hiding it.
+
+## Rule 13 — Keep these documents current
+When you learn something that contradicts `PROJECT.md`, fix `PROJECT.md` in the same
+change. A stale handoff document is worse than none — the next agent will trust it.
+Never edit `AGENTS.md`: it is a symlink to this file.
